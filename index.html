@@ -483,19 +483,88 @@ textarea{resize:vertical;min-height:80px}
 #loading-screen p{font-family:var(--font-serif);color:var(--text-muted);font-size:1.1rem}
 
 /* ════════════════════════════════
+   HAMBURGER
+════════════════════════════════ */
+#hamburger{
+  display:none;
+  flex-direction:column;justify-content:center;align-items:center;
+  gap:5px;width:38px;height:38px;border:none;background:none;
+  cursor:pointer;flex:0 0 auto;padding:4px;border-radius:var(--radius-sm);
+  transition:background var(--transition);
+}
+#hamburger:hover{background:var(--parchment)}
+#hamburger span{
+  display:block;width:22px;height:2px;
+  background:var(--text-primary);border-radius:2px;
+  transition:all 0.25s ease;transform-origin:center;
+}
+#hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+#hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+#hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* ════════════════════════════════
+   MOBILE NAV PANEL
+════════════════════════════════ */
+#mobile-nav{
+  display:none;
+  position:fixed;top:60px;left:0;right:0;z-index:99;
+  background:rgba(245,242,236,0.98);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--stone-light);
+  padding:0.75rem 1.25rem 1rem;
+  box-shadow:0 8px 24px rgba(58,53,48,0.1);
+  flex-direction:column;gap:0.35rem;
+  animation:slideDown 0.2s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+#mobile-nav.open{display:flex}
+#mobile-nav button{
+  font-family:var(--font-sans);font-size:0.92rem;font-weight:500;
+  background:none;border:none;cursor:pointer;
+  color:var(--text-muted);text-align:left;
+  padding:0.7rem 1rem;border-radius:var(--radius-sm);
+  transition:all var(--transition);
+}
+#mobile-nav button:hover{background:var(--parchment);color:var(--text-primary)}
+#mobile-nav button.active{background:var(--sage-pale);color:var(--sage-dark);font-weight:600}
+#mobile-nav-footer{
+  display:flex;align-items:center;gap:0.75rem;
+  margin-top:0.5rem;padding-top:0.75rem;
+  border-top:1px solid var(--stone-light);
+}
+
+/* ════════════════════════════════
    RESPONSIVE
 ════════════════════════════════ */
-@media(max-width:640px){
+@media(max-width:768px){
+  #hamburger{display:flex}
+  #topbar nav{display:none}
+  #lang-toggle{display:none}
+  #user-pill{display:none}
   #topbar{padding:0 1rem}
-  #topbar .logo{font-size:1.2rem}
+  #topbar .logo{font-size:1.25rem}
   #app{padding:1rem}
   .form-row{grid-template-columns:1fr}
-  .kanban{flex-direction:column}
+  /* Kanban: responsive grid instead of horizontal scroll */
+  .kanban{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    overflow-x:unset;
+    gap:1rem;
+  }
   .kanban-col{min-width:unset}
   .assign-form{flex-direction:column}
   .log-form{flex-direction:column}
   #modal{max-width:100%}
   #modal-overlay{padding:0.5rem}
+  .dash-grid{grid-template-columns:1fr}
+  .board-controls{flex-direction:column}
+  .board-controls input[type=text]{min-width:unset;width:100%}
+}
+@media(max-width:480px){
+  .kanban{
+    grid-template-columns:1fr;
+  }
 }
 </style>
 </head>
@@ -509,6 +578,9 @@ textarea{resize:vertical;min-height:80px}
 
 <!-- ─── Top Bar ─── -->
 <header id="topbar">
+  <button id="hamburger" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
   <div class="logo">FAIA <span>Fields</span></div>
   <nav id="main-nav">
     <button class="active" data-page="dashboard" id="nav-dashboard" data-i18n="nav_dashboard">Dashboard</button>
@@ -532,6 +604,29 @@ textarea{resize:vertical;min-height:80px}
     </select>
   </div>
 </header>
+
+<!-- ─── Mobile Nav Panel ─── -->
+<div id="mobile-nav" role="navigation">
+  <button class="active" data-page="dashboard" id="mnav-dashboard" data-i18n="nav_dashboard">Dashboard</button>
+  <button data-page="board" id="mnav-board" data-i18n="nav_board">Task Board</button>
+  <button data-page="submit" id="mnav-submit" data-i18n="nav_submit">+ New Task</button>
+  <button data-page="hourbank" id="mnav-hourbank" data-i18n="nav_hourbank">Hour Bank</button>
+  <div id="mobile-nav-footer">
+    <div id="lang-toggle-mobile" style="display:flex;align-items:center;border:1px solid var(--stone-light);border-radius:20px;overflow:hidden">
+      <button style="font-size:0.75rem;font-weight:600;border:none;background:none;cursor:pointer;padding:0.3rem 0.65rem;color:var(--text-muted);transition:all 0.2s ease" id="mlang-en" class="active" onclick="window._setLang('en')">EN</button>
+      <button style="font-size:0.75rem;font-weight:600;border:none;background:none;cursor:pointer;padding:0.3rem 0.65rem;color:var(--text-muted);transition:all 0.2s ease" id="mlang-pt" onclick="window._setLang('pt')">PT</button>
+    </div>
+    <div class="avatar" id="mobile-user-avatar" style="width:28px;height:28px;font-size:0.7rem">—</div>
+    <select id="mobile-user-select" style="flex:1;font-family:var(--font-sans);font-size:0.82rem;border:1px solid var(--stone-light);border-radius:20px;background:var(--parchment);color:var(--text-primary);padding:0.35rem 0.9rem;cursor:pointer;outline:none;">
+      <option value="">Select member…</option>
+      <option value="Sergio">Sergio</option>
+      <option value="Steve">Steve</option>
+      <option value="Conceição">Conceição</option>
+      <option value="Jenny">Jenny</option>
+      <option value="Luke">Luke</option>
+    </select>
+  </div>
+</div>
 
 <!-- ─── Pages ─── -->
 <main id="app">
@@ -1473,10 +1568,67 @@ document.querySelectorAll('input[name=benefit]').forEach(r=>{
 // ══════════════════════════════════════════════════════════
 function switchPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#main-nav button, #mobile-nav button:not(#mobile-nav-footer button)').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name)?.classList.add('active');
   document.getElementById('nav-'+name)?.classList.add('active');
+  document.getElementById('mnav-'+name)?.classList.add('active');
+  // close mobile menu
+  document.getElementById('mobile-nav').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('hamburger').setAttribute('aria-expanded','false');
 }
+
+// hamburger toggle
+const hamburger = document.getElementById('hamburger');
+const mobileNav = document.getElementById('mobile-nav');
+hamburger.addEventListener('click',()=>{
+  const open = mobileNav.classList.toggle('open');
+  hamburger.classList.toggle('open', open);
+  hamburger.setAttribute('aria-expanded', open);
+});
+// close on outside click
+document.addEventListener('click', e=>{
+  if(!hamburger.contains(e.target) && !mobileNav.contains(e.target)){
+    mobileNav.classList.remove('open');
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded','false');
+  }
+});
+
+// mobile nav buttons
+document.querySelectorAll('#mobile-nav button[data-page]').forEach(btn=>{
+  btn.addEventListener('click',()=>switchPage(btn.dataset.page));
+});
+
+// mobile user select — sync with desktop
+const mobileUserSel = document.getElementById('mobile-user-select');
+mobileUserSel.value = currentUser;
+mobileUserSel.addEventListener('change',()=>{
+  currentUser = mobileUserSel.value;
+  localStorage.setItem('faiaUser', currentUser);
+  document.getElementById('user-select').value = currentUser;
+  document.getElementById('user-avatar').textContent = avatarLetter(currentUser);
+  document.getElementById('mobile-user-avatar').textContent = avatarLetter(currentUser);
+  renderAll();
+});
+if(currentUser){
+  document.getElementById('mobile-user-avatar').textContent = avatarLetter(currentUser);
+  mobileUserSel.value = currentUser;
+}
+
+// sync mobile lang buttons style
+function syncMobileLang(){
+  document.getElementById('mlang-en').style.background = currentLang==='en'?'var(--sage-dark)':'';
+  document.getElementById('mlang-en').style.color = currentLang==='en'?'#fff':'var(--text-muted)';
+  document.getElementById('mlang-pt').style.background = currentLang==='pt'?'var(--sage-dark)':'';
+  document.getElementById('mlang-pt').style.color = currentLang==='pt'?'#fff':'var(--text-muted)';
+}
+syncMobileLang();
+const origSetLang = window._setLang;
+window._setLang = function(lang){
+  origSetLang(lang);
+  syncMobileLang();
+};
 
 document.querySelectorAll('#main-nav button').forEach(btn=>{
   btn.addEventListener('click',()=>switchPage(btn.dataset.page));
