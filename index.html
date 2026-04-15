@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ╔══════════════════════════════════════════════════════╗
+  ║        FAIA COMMUNITY TASK MANAGER                   ║
+  ║  Setup Instructions:                                 ║
+  ║  1. Create a Firebase project at console.firebase.com║
+  ║  2. Enable Firestore (Native mode, free Spark tier)  ║
+  ║  3. Paste your Firebase config in the block below    ║
+  ║  4. Open this file in a browser OR deploy to         ║
+  ║     GitHub Pages (just push index.html to repo)      ║
+  ╚══════════════════════════════════════════════════════╝
+-->
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FAIA — Community Task Manager</title>
+<meta name="description" content="Real-time collaborative task manager for the FAIA intentional land community in Portugal."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS — FAIA Natural Palette
+═══════════════════════════════════════ */
+:root {
+  --cream:       #f5f2ec;
+  --parchment:   #ede8de;
+  --stone-light: #ddd8cf;
+  --stone:       #b8b0a2;
+  --stone-dark:  #7a7268;
+  --sage-pale:   #e5ebe0;
+  --sage:        #8fa882;
+  --sage-dark:   #5c7a52;
+  --taupe:       #c4b9a8;
+  --earth:       #9c8c78;
+  --earth-dark:  #6b5c48;
+  --blush:       #e8ddd4;
+  --text-primary:#3a3530;
+  --text-muted:  #7a7268;
+  --text-light:  #a89f94;
+
+  /* status colours — muted naturals */
+  --s-pending:   #d4c87a;
+  --s-approved:  #8fa882;
+  --s-priority:  #c4956a;
+  --s-backlog:   #a8bec4;
+  --s-progress:  #8fa882;
+  --s-done:      #7a9e70;
+  --s-rejected:  #c48a8a;
+
+  --radius:   12px;
+  --radius-sm: 6px;
+  --shadow:   0 2px 12px rgba(58,53,48,0.08);
+  --shadow-md:0 4px 24px rgba(58,53,48,0.12);
+  --transition: 0.2s ease;
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans:  'Outfit', sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-sans);
+  background:var(--cream);
+  color:var(--text-primary);
+  min-height:100vh;
+  font-size:15px;
+  line-height:1.6;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--parchment)}
+::-webkit-scrollbar-thumb{background:var(--stone);border-radius:3px}
+
+/* ── Typography ── */
+h1,h2,h3,h4{font-family:var(--font-serif);font-weight:400;letter-spacing:0.02em}
+h1{font-size:clamp(1.6rem,4vw,2.4rem);color:var(--text-primary)}
+h2{font-size:clamp(1.2rem,3vw,1.7rem)}
+h3{font-size:1.15rem}
+
+/* ════════════════════════════════
+   TOP BAR
+════════════════════════════════ */
+#topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(245,242,236,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--stone-light);
+  padding:0 1.5rem;
+  display:flex;align-items:center;gap:1rem;
+  height:60px;
+}
+#topbar .logo{
+  font-family:var(--font-serif);
+  font-size:1.5rem;letter-spacing:0.12em;
+  color:var(--sage-dark);font-weight:600;
+  flex:0 0 auto;
+}
+#topbar .logo span{color:var(--earth);font-style:italic}
+#topbar nav{display:flex;gap:0.25rem;flex:1;overflow-x:auto}
+#topbar nav button{
+  background:none;border:none;cursor:pointer;
+  font-family:var(--font-sans);font-size:0.8rem;font-weight:500;
+  color:var(--text-muted);
+  padding:0.45rem 0.85rem;border-radius:var(--radius-sm);
+  transition:all var(--transition);white-space:nowrap;
+}
+#topbar nav button:hover{background:var(--parchment);color:var(--text-primary)}
+#topbar nav button.active{background:var(--sage-pale);color:var(--sage-dark);font-weight:600}
+#user-pill{
+  margin-left:auto;flex:0 0 auto;
+  display:flex;align-items:center;gap:0.5rem;
+}
+#user-pill select{
+  font-family:var(--font-sans);font-size:0.82rem;
+  border:1px solid var(--stone-light);border-radius:20px;
+  background:var(--parchment);color:var(--text-primary);
+  padding:0.35rem 0.9rem;cursor:pointer;outline:none;
+  transition:border-color var(--transition);
+}
+#user-pill select:focus{border-color:var(--sage)}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--sage),var(--earth));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:0.75rem;font-weight:600;
+  flex:0 0 auto;
+}
+/* ── Language toggle ── */
+#lang-toggle{
+  display:flex;align-items:center;
+  border:1px solid var(--stone-light);border-radius:20px;
+  overflow:hidden;flex:0 0 auto;
+}
+#lang-toggle button{
+  font-family:var(--font-sans);font-size:0.75rem;font-weight:600;
+  border:none;background:none;cursor:pointer;
+  padding:0.3rem 0.65rem;color:var(--text-muted);
+  transition:all var(--transition);
+}
+#lang-toggle button.active{
+  background:var(--sage-dark);color:#fff;
+}
+
+/* ════════════════════════════════
+   MAIN LAYOUT
+════════════════════════════════ */
+#app{max-width:1280px;margin:0 auto;padding:1.5rem}
+.page{display:none;animation:fadeIn 0.25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ════════════════════════════════
+   DASHBOARD
+════════════════════════════════ */
+.dash-hero{
+  background:linear-gradient(135deg,var(--sage-pale) 0%,var(--parchment) 60%,var(--blush) 100%);
+  border-radius:var(--radius);padding:2rem 2.5rem;margin-bottom:1.5rem;
+  border:1px solid var(--stone-light);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+}
+.dash-hero h1{line-height:1.2}
+.dash-hero p{color:var(--text-muted);font-size:0.9rem;margin-top:0.35rem}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem;margin-bottom:1.5rem}
+
+.dash-section{
+  background:#fff;border-radius:var(--radius);
+  border:1px solid var(--stone-light);
+  overflow:hidden;box-shadow:var(--shadow);
+}
+.dash-section-header{
+  padding:1rem 1.25rem 0.75rem;
+  border-bottom:1px solid var(--stone-light);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.dash-section-header h3{font-family:var(--font-serif);font-size:1.05rem}
+.badge{
+  font-size:0.7rem;font-weight:600;
+  padding:0.2rem 0.55rem;border-radius:10px;
+  background:var(--sage-pale);color:var(--sage-dark);
+}
+.dash-section-body{padding:0.75rem 1.25rem 1rem}
+
+.mini-task{
+  padding:0.65rem 0;
+  border-bottom:1px solid var(--stone-light);
+  display:flex;align-items:flex-start;gap:0.65rem;
+}
+.mini-task:last-child{border-bottom:none}
+.mini-task .dot{
+  width:8px;height:8px;border-radius:50%;flex:0 0 8px;margin-top:5px;
+}
+.mini-task .info{flex:1;min-width:0}
+.mini-task .info strong{font-size:0.88rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-task .info span{font-size:0.76rem;color:var(--text-muted)}
+.mini-task .chip{font-size:0.7rem;padding:0.15rem 0.5rem;border-radius:8px;white-space:nowrap;flex:0 0 auto;margin-top:2px;background:var(--parchment);color:var(--text-muted)}
+.empty-state{color:var(--text-light);font-size:0.85rem;padding:0.5rem 0;font-style:italic}
+
+.activity-item{
+  padding:0.55rem 0;border-bottom:1px solid var(--stone-light);
+  font-size:0.82rem;color:var(--text-muted);
+}
+.activity-item:last-child{border-bottom:none}
+.activity-item strong{color:var(--text-primary)}
+.activity-item .ts{font-size:0.72rem;color:var(--text-light);display:block}
+
+/* ════════════════════════════════
+   TASK BOARD (Kanban)
+════════════════════════════════ */
+.board-controls{
+  display:flex;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center;
+}
+.board-controls input[type=text]{
+  font-family:var(--font-sans);font-size:0.85rem;
+  border:1px solid var(--stone-light);border-radius:var(--radius-sm);
+  background:var(--parchment);color:var(--text-primary);
+  padding:0.45rem 0.85rem;outline:none;flex:1;min-width:180px;
+  transition:border-color var(--transition);
+}
+.board-controls input:focus{border-color:var(--sage)}
+.board-controls select{
+  font-family:var(--font-sans);font-size:0.82rem;
+  border:1px solid var(--stone-light);border-radius:var(--radius-sm);
+  background:var(--parchment);color:var(--text-primary);
+  padding:0.45rem 0.75rem;outline:none;cursor:pointer;
+}
+.kanban{display:flex;gap:1rem;overflow-x:auto;padding-bottom:1rem}
+.kanban-col{
+  min-width:260px;flex:1;
+  background:var(--parchment);border-radius:var(--radius);
+  border:1px solid var(--stone-light);
+  overflow:hidden;
+}
+.kanban-col-head{
+  padding:0.8rem 1rem;
+  font-family:var(--font-serif);font-size:1rem;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:3px solid transparent;
+}
+.kanban-col-head .count{font-family:var(--font-sans);font-size:0.75rem;
+  font-weight:600;padding:0.15rem 0.5rem;border-radius:8px;background:rgba(255,255,255,0.6)}
+.kanban-cards{padding:0.75rem;display:flex;flex-direction:column;gap:0.65rem;min-height:80px}
+
+/* status colours applied as data attrs at runtime */
+.col-pending .kanban-col-head{border-color:var(--s-pending)}
+.col-priority .kanban-col-head{border-color:var(--s-priority)}
+.col-backlog  .kanban-col-head{border-color:var(--s-backlog)}
+.col-progress .kanban-col-head{border-color:var(--s-progress)}
+.col-done     .kanban-col-head{border-color:var(--s-done)}
+.col-rejected .kanban-col-head{border-color:var(--s-rejected)}
+
+.task-card{
+  background:#fff;border-radius:var(--radius-sm);
+  border:1px solid var(--stone-light);
+  padding:0.85rem 1rem;cursor:pointer;
+  box-shadow:var(--shadow);
+  transition:transform var(--transition),box-shadow var(--transition);
+  position:relative;overflow:hidden;
+}
+.task-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--stone-light);
+}
+.task-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.task-card h4{font-family:var(--font-sans);font-size:0.88rem;font-weight:600;
+  margin-bottom:0.3rem;padding-left:0.5rem}
+.task-card .meta{display:flex;flex-wrap:wrap;gap:0.3rem;padding-left:0.5rem}
+.tag{font-size:0.69rem;padding:0.1rem 0.45rem;border-radius:6px;
+  background:var(--parchment);color:var(--text-muted);font-weight:500}
+.tag.urgent{background:#fce9d4;color:#8a4a1a}
+.tag.communal{background:var(--sage-pale);color:var(--sage-dark)}
+.tag.personal{background:#ead9f5;color:#6b3d8a}
+.vote-mini{font-size:0.72rem;color:var(--text-light);padding-left:0.5rem;margin-top:0.35rem}
+.cost-tag{font-size:0.72rem;color:var(--earth-dark);font-weight:600;padding-left:0.5rem;margin-top:0.2rem}
+
+/* ════════════════════════════════
+   TASK DETAIL MODAL
+════════════════════════════════ */
+#modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(58,53,48,0.45);backdrop-filter:blur(4px);
+  display:none;align-items:flex-start;justify-content:center;
+  padding:1.5rem 1rem;overflow-y:auto;
+}
+#modal-overlay.open{display:flex}
+#modal{
+  background:var(--cream);border-radius:var(--radius);
+  border:1px solid var(--stone-light);
+  width:100%;max-width:680px;
+  box-shadow:var(--shadow-md);
+  animation:fadeIn 0.2s ease;
+}
+#modal-header{
+  padding:1.25rem 1.5rem;border-bottom:1px solid var(--stone-light);
+  display:flex;align-items:flex-start;gap:1rem;
+}
+#modal-header h2{flex:1;font-family:var(--font-serif)}
+#modal-header .close-btn{
+  background:none;border:none;cursor:pointer;font-size:1.4rem;
+  color:var(--text-muted);line-height:1;padding:0.1rem;
+  transition:color var(--transition);
+}
+#modal-header .close-btn:hover{color:var(--text-primary)}
+#modal-body{padding:1.25rem 1.5rem}
+
+.modal-section{margin-bottom:1.5rem}
+.modal-section h3{
+  font-family:var(--font-sans);font-size:0.72rem;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);
+  margin-bottom:0.75rem;padding-bottom:0.4rem;
+  border-bottom:1px solid var(--stone-light);
+}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.6rem}
+.meta-item label{font-size:0.72rem;color:var(--text-muted);display:block}
+.meta-item strong{font-size:0.88rem;color:var(--text-primary)}
+
+/* Voting in modal */
+.vote-grid{display:flex;flex-direction:column;gap:0.65rem}
+.vote-row{
+  display:flex;align-items:center;gap:0.75rem;
+  padding:0.6rem 0.85rem;border-radius:var(--radius-sm);
+  background:var(--parchment);border:1px solid var(--stone-light);
+}
+.vote-row .vname{flex:1;font-size:0.85rem;font-weight:500}
+.vote-btns{display:flex;gap:0.35rem}
+.vote-btns button{
+  font-size:0.72rem;font-family:var(--font-sans);font-weight:600;
+  border:1px solid var(--stone-light);border-radius:var(--radius-sm);
+  background:none;cursor:pointer;padding:0.25rem 0.65rem;
+  transition:all var(--transition);
+}
+.vote-btns button.approve{color:var(--sage-dark)}
+.vote-btns button.approve.sel{background:var(--sage-dark);color:#fff;border-color:var(--sage-dark)}
+.vote-btns button.reject{color:var(--s-rejected)}
+.vote-btns button.reject.sel{background:var(--s-rejected);color:#fff;border-color:var(--s-rejected)}
+.vote-btns button.pyes{color:var(--s-priority)}
+.vote-btns button.pyes.sel{background:var(--s-priority);color:#fff;border-color:var(--s-priority)}
+.vote-btns button.pno{color:var(--text-muted)}
+.vote-btns button.pno.sel{background:var(--stone);color:#fff;border-color:var(--stone)}
+.vote-sep{width:1px;height:20px;background:var(--stone-light)}
+.tally-bar{
+  margin-top:0.65rem;padding:0.6rem 0.85rem;border-radius:var(--radius-sm);
+  background:var(--cream);border:1px solid var(--stone-light);
+  font-size:0.8rem;color:var(--text-muted);display:flex;gap:1.25rem;flex-wrap:wrap;
+}
+.tally-val{font-weight:600;color:var(--text-primary)}
+
+/* Assignment */
+.assign-form{display:flex;flex-wrap:wrap;gap:0.65rem;align-items:flex-end}
+.field-group{display:flex;flex-direction:column;gap:0.3rem;min-width:120px}
+.field-group label{font-size:0.72rem;color:var(--text-muted);font-weight:500}
+
+/* Hours log */
+.hours-entry{
+  padding:0.55rem 0;border-bottom:1px solid var(--stone-light);
+  display:grid;grid-template-columns:auto 1fr auto;gap:0.5rem;align-items:start;
+}
+.hours-entry:last-child{border-bottom:none}
+.hours-entry .hw{font-size:0.82rem;font-weight:600}
+.hours-entry .hn{font-size:0.78rem;color:var(--text-muted)}
+.hours-entry .hh{font-size:0.82rem;color:var(--earth-dark);font-weight:600;white-space:nowrap}
+.log-form{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.75rem;align-items:flex-end}
+
+/* Activity log */
+.activity-log{max-height:180px;overflow-y:auto}
+.al-item{padding:0.45rem 0;border-bottom:1px solid var(--stone-light);font-size:0.8rem}
+.al-item:last-child{border-bottom:none}
+.al-item .alt{font-size:0.7rem;color:var(--text-light)}
+
+/* Form inputs shared */
+input[type=text],input[type=number],input[type=date],textarea,select{
+  font-family:var(--font-sans);font-size:0.84rem;
+  border:1px solid var(--stone-light);border-radius:var(--radius-sm);
+  background:var(--parchment);color:var(--text-primary);
+  padding:0.45rem 0.7rem;outline:none;width:100%;
+  transition:border-color var(--transition),box-shadow var(--transition);
+}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--sage);
+  box-shadow:0 0 0 3px rgba(143,168,130,0.15);
+}
+textarea{resize:vertical;min-height:80px}
+
+/* Buttons */
+.btn{
+  font-family:var(--font-sans);font-size:0.82rem;font-weight:600;
+  border:none;border-radius:var(--radius-sm);cursor:pointer;
+  padding:0.5rem 1.1rem;transition:all var(--transition);white-space:nowrap;
+}
+.btn-primary{background:var(--sage-dark);color:#fff}
+.btn-primary:hover{background:var(--earth-dark)}
+.btn-secondary{background:var(--parchment);color:var(--text-primary);border:1px solid var(--stone-light)}
+.btn-secondary:hover{background:var(--stone-light)}
+.btn-sm{padding:0.35rem 0.75rem;font-size:0.76rem}
+.btn-danger{background:#c48a8a;color:#fff}
+.btn-danger:hover{background:#a06060}
+
+/* ════════════════════════════════
+   SUBMIT FORM PAGE
+════════════════════════════════ */
+.form-card{
+  background:#fff;border-radius:var(--radius);
+  border:1px solid var(--stone-light);
+  max-width:680px;margin:0 auto;
+  padding:2rem;box-shadow:var(--shadow);
+}
+.form-card h2{font-family:var(--font-serif);margin-bottom:1.5rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.form-full{margin-bottom:1rem}
+.form-group{display:flex;flex-direction:column;gap:0.3rem}
+.form-group label{font-size:0.78rem;font-weight:500;color:var(--text-muted)}
+.form-group label span{color:var(--sage-dark)}
+.radio-group{display:flex;gap:0.75rem;flex-wrap:wrap}
+.radio-opt{display:flex;align-items:center;gap:0.35rem;font-size:0.84rem;cursor:pointer}
+.radio-opt input[type=radio]{accent-color:var(--sage-dark)}
+
+/* ════════════════════════════════
+   HOUR BANK PAGE
+════════════════════════════════ */
+.hb-table-wrap{overflow-x:auto}
+.hb-table{width:100%;border-collapse:collapse;font-size:0.85rem}
+.hb-table th{
+  text-align:left;padding:0.7rem 1rem;
+  background:var(--parchment);color:var(--text-muted);
+  font-size:0.72rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;
+  border-bottom:2px solid var(--stone-light);
+}
+.hb-table td{padding:0.8rem 1rem;border-bottom:1px solid var(--stone-light)}
+.hb-table tr:last-child td{border-bottom:none}
+.hb-table tr:hover td{background:var(--sage-pale)}
+.hb-bar{height:8px;border-radius:4px;background:var(--sage-pale);margin-top:4px}
+.hb-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--sage),var(--earth));transition:width 0.5s ease}
+.hb-total{font-weight:600;font-size:1.05rem;color:var(--sage-dark)}
+
+/* ════════════════════════════════
+   STATUS CHIPS
+════════════════════════════════ */
+.status-chip{
+  font-size:0.7rem;font-weight:600;letter-spacing:0.04em;
+  padding:0.2rem 0.6rem;border-radius:10px;display:inline-block;
+}
+.st-pending  {background:#fdf8d8;color:#7a6a10}
+.st-approved {background:var(--sage-pale);color:var(--sage-dark)}
+.st-priority {background:#fce9d4;color:#7a4210}
+.st-backlog  {background:#d8e8f0;color:#336080}
+.st-progress {background:#d8e8d8;color:#2a5a2a}
+.st-done     {background:#d0e8c8;color:#205020}
+.st-rejected {background:#f0d8d8;color:#7a2020}
+
+/* ════════════════════════════════
+   NOTIFICATIONS / TOASTS
+════════════════════════════════ */
+#toast-container{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:500;
+  display:flex;flex-direction:column;gap:0.5rem;
+}
+.toast{
+  background:#fff;border:1px solid var(--stone-light);
+  border-left:4px solid var(--sage-dark);
+  border-radius:var(--radius-sm);padding:0.75rem 1rem;
+  font-size:0.82rem;box-shadow:var(--shadow-md);
+  animation:slideIn 0.25s ease;max-width:300px;
+}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.error{border-left-color:var(--s-rejected)}
+
+/* ════════════════════════════════
+   LOADING / OFFLINE
+════════════════════════════════ */
+#loading-screen{
+  position:fixed;inset:0;background:var(--cream);z-index:1000;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;
+}
+.spinner{
+  width:40px;height:40px;border:3px solid var(--stone-light);
+  border-top-color:var(--sage-dark);border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-screen p{font-family:var(--font-serif);color:var(--text-muted);font-size:1.1rem}
+
+/* ════════════════════════════════
+   RESPONSIVE
+════════════════════════════════ */
+@media(max-width:640px){
+  #topbar{padding:0 1rem}
+  #topbar .logo{font-size:1.2rem}
+  #app{padding:1rem}
+  .form-row{grid-template-columns:1fr}
+  .kanban{flex-direction:column}
+  .kanban-col{min-width:unset}
+  .assign-form{flex-direction:column}
+  .log-form{flex-direction:column}
+  #modal{max-width:100%}
+  #modal-overlay{padding:0.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── Loading screen ─── -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p>Connecting to FAIA…</p>
+</div>
+
+<!-- ─── Top Bar ─── -->
+<header id="topbar">
+  <div class="logo">FAIA <span>Fields</span></div>
+  <nav id="main-nav">
+    <button class="active" data-page="dashboard" id="nav-dashboard" data-i18n="nav_dashboard">Dashboard</button>
+    <button data-page="board" id="nav-board" data-i18n="nav_board">Task Board</button>
+    <button data-page="submit" id="nav-submit" data-i18n="nav_submit">+ New Task</button>
+    <button data-page="hourbank" id="nav-hourbank" data-i18n="nav_hourbank">Hour Bank</button>
+  </nav>
+  <div id="lang-toggle">
+    <button id="lang-en" class="active" onclick="window._setLang('en')">EN</button>
+    <button id="lang-pt" onclick="window._setLang('pt')">PT</button>
+  </div>
+  <div id="user-pill">
+    <div class="avatar" id="user-avatar">—</div>
+    <select id="user-select">
+      <option value="" data-i18n="select_member">Select member…</option>
+      <option value="Sergio">Sergio</option>
+      <option value="Steve">Steve</option>
+      <option value="Conceição">Conceição</option>
+      <option value="Jenny">Jenny</option>
+      <option value="Luke">Luke</option>
+    </select>
+  </div>
+</header>
+
+<!-- ─── Pages ─── -->
+<main id="app">
+
+  <!-- DASHBOARD -->
+  <section id="page-dashboard" class="page active">
+    <div class="dash-hero">
+      <div>
+        <h1><span data-i18n="hero_greeting">Good to see you,</span> <span id="hero-name">friend</span></h1>
+        <p id="hero-date"></p>
+      </div>
+      <div id="dash-stats" style="display:flex;gap:1rem;flex-wrap:wrap"></div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <h3 data-i18n="dash_needs_vote">Needs My Vote</h3>
+          <span class="badge" id="badge-vote">0</span>
+        </div>
+        <div class="dash-section-body" id="dash-vote-list"><p class="empty-state" data-i18n="all_caught_up">All caught up!</p></div>
+      </div>
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <h3 data-i18n="dash_assigned">Assigned to Me</h3>
+          <span class="badge" id="badge-assigned">0</span>
+        </div>
+        <div class="dash-section-body" id="dash-assigned-list"><p class="empty-state" data-i18n="nothing_assigned">Nothing assigned yet.</p></div>
+      </div>
+      <div class="dash-section" style="grid-column:1/-1">
+        <div class="dash-section-header">
+          <h3 data-i18n="dash_activity">Recent Activity</h3>
+        </div>
+        <div class="dash-section-body" id="dash-activity"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section id="page-board" class="page">
+    <div class="board-controls">
+      <input type="text" id="board-search" data-i18n-placeholder="search_placeholder" placeholder="Search tasks…"/>
+      <select id="board-filter-cat">
+        <option value="" data-i18n="all_categories">All categories</option>
+        <option>Regenerative / Land</option>
+        <option>Infrastructure</option>
+        <option>Green Tech / Aeroponics</option>
+        <option>Community / Events</option>
+        <option>Administration / Legal</option>
+        <option data-i18n="other">Other</option>
+      </select>
+      <select id="board-filter-benefit">
+        <option value="" data-i18n="all_benefits">All benefits</option>
+        <option value="Communal" data-i18n="communal">Communal</option>
+        <option value="Personal" data-i18n="personal">Personal</option>
+      </select>
+    </div>
+    <div class="kanban" id="kanban-board"></div>
+  </section>
+
+  <!-- SUBMIT TASK -->
+  <section id="page-submit" class="page">
+    <div class="form-card">
+      <h2 data-i18n="form_title">Submit a New Task</h2>
+      <div class="form-full">
+        <div class="form-group">
+          <label data-i18n="lbl_title">Title <span>*</span></label>
+          <input type="text" id="f-title" data-i18n-placeholder="title_placeholder" placeholder="Short, descriptive title"/>
+        </div>
+      </div>
+      <div class="form-full">
+        <div class="form-group">
+          <label data-i18n="lbl_desc">Description</label>
+          <textarea id="f-desc" data-i18n-placeholder="desc_placeholder" placeholder="What needs to be done and why?"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="lbl_cat">Category <span>*</span></label>
+          <select id="f-cat">
+            <option value="" data-i18n="select_ellipsis">Select…</option>
+            <option>Regenerative / Land</option>
+            <option>Infrastructure</option>
+            <option>Green Tech / Aeroponics</option>
+            <option>Community / Events</option>
+            <option>Administration / Legal</option>
+            <option data-i18n="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_cost">Estimated Cost (€)</label>
+          <input type="number" id="f-cost" placeholder="0.00" min="0" step="0.01"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="lbl_urgency">Urgency</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="urgency" value="Planned" checked/> <span data-i18n="planned">Planned</span></label>
+            <label class="radio-opt"><input type="radio" name="urgency" value="Urgent"/> <span data-i18n="urgent">Urgent</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_benefit">Benefit Type</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="benefit" value="Communal" checked id="rb-communal"/> <span data-i18n="communal">Communal</span></label>
+            <label class="radio-opt"><input type="radio" name="benefit" value="Personal" id="rb-personal"/> <span data-i18n="personal">Personal</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="form-full" id="beneficiary-row" style="display:none">
+        <div class="form-group">
+          <label data-i18n="lbl_beneficiary">Beneficiary Member</label>
+          <select id="f-beneficiary">
+            <option value="" data-i18n="select_member">Select member…</option>
+            <option>Sergio</option><option>Steve</option>
+            <option>Conceição</option><option>Jenny</option><option>Luke</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:1.25rem;display:flex;gap:0.75rem">
+        <button class="btn btn-primary" id="submit-task-btn" data-i18n="btn_submit">Submit Task</button>
+        <button class="btn btn-secondary" id="clear-form-btn" data-i18n="btn_clear">Clear</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOUR BANK -->
+  <section id="page-hourbank" class="page">
+    <h2 style="font-family:var(--font-serif);margin-bottom:1.25rem" data-i18n="hb_title">Hour Bank — Community Ledger</h2>
+    <div class="dash-section">
+      <div class="dash-section-header"><h3 data-i18n="hb_total">Total Hours Contributed</h3></div>
+      <div class="dash-section-body hb-table-wrap">
+        <table class="hb-table">
+          <thead><tr><th data-i18n="hb_col_member">Member</th><th data-i18n="hb_col_hours">Total Hours</th><th data-i18n="hb_col_contrib">Contribution</th></tr></thead>
+          <tbody id="hb-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ─── Task Modal ─── -->
+<div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-task-title">
+  <div id="modal">
+    <div id="modal-header">
+      <h2 id="modal-task-title">Task Detail</h2>
+      <span id="modal-status-chip" class="status-chip"></span>
+      <button class="close-btn" id="modal-close" aria-label="Close">✕</button>
+    </div>
+    <div id="modal-body">
+      <!-- dynamically filled -->
+    </div>
+  </div>
+</div>
+
+<!-- ─── Toast container ─── -->
+<div id="toast-container"></div>
+
+<!-- ════════════════════════════════
+     FIREBASE CONFIG PLACEHOLDER
+════════════════════════════════ -->
+<script type="module">
+// ┌─────────────────────────────────────────────────────────┐
+// │  PASTE YOUR FIREBASE CONFIG HERE                        │
+// │  Get it from: Firebase Console → Project Settings →    │
+// │  Your apps → Web app → SDK setup → Config              │
+// └─────────────────────────────────────────────────────────┘
+const firebaseConfig = {
+  apiKey:            "AIzaSyCTw8KchIBH9FsWersnEEJqckKzk5vRlJU",
+  authDomain:        "raiz-os.firebaseapp.com",
+  projectId:         "raiz-os",
+  storageBucket:     "raiz-os.firebasestorage.app",
+  messagingSenderId: "293754356179",
+  appId:             "1:293754356179:web:5c1069b7dffbd4be416f26"
+};
+
+// ── Firebase SDK (CDN, no npm) ──────────────────────────────
+import { initializeApp }              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc,
+         onSnapshot, addDoc, updateDoc,
+         serverTimestamp, query, orderBy
+       }                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const fbApp = initializeApp(firebaseConfig);
+const db    = getFirestore(fbApp);
+
+// ══════════════════════════════════════════════════════════
+//  TRANSLATIONS
+// ══════════════════════════════════════════════════════════
+const TRANSLATIONS = {
+  en: {
+    nav_dashboard:'Dashboard', nav_board:'Task Board',
+    nav_submit:'+ New Task', nav_hourbank:'Hour Bank',
+    select_member:'Select member…',
+    hero_greeting:'Good to see you,',
+    dash_needs_vote:'Needs My Vote', dash_assigned:'Assigned to Me',
+    dash_activity:'Recent Activity',
+    all_caught_up:'All caught up!', nothing_assigned:'Nothing assigned yet.',
+    no_activity:'No activity yet.',
+    stat_pending:'Pending', stat_progress:'In Progress', stat_done:'Done',
+    search_placeholder:'Search tasks…',
+    all_categories:'All categories', all_benefits:'All benefits',
+    communal:'Communal', personal:'Personal', other:'Other',
+    form_title:'Submit a New Task',
+    lbl_title:'Title *', lbl_desc:'Description', lbl_cat:'Category *',
+    lbl_cost:'Estimated Cost (€)', lbl_urgency:'Urgency',
+    lbl_benefit:'Benefit Type', lbl_beneficiary:'Beneficiary Member',
+    title_placeholder:'Short, descriptive title',
+    desc_placeholder:'What needs to be done and why?',
+    select_ellipsis:'Select…', planned:'Planned', urgent:'Urgent',
+    btn_submit:'Submit Task', btn_clear:'Clear',
+    hb_title:'Hour Bank — Community Ledger',
+    hb_total:'Total Hours Contributed',
+    hb_col_member:'Member', hb_col_hours:'Total Hours', hb_col_contrib:'Contribution',
+    col_pending:'Pending Vote', col_priority:'Priority Queue', col_backlog:'Backlog',
+    col_progress:'In Progress', col_done:'Done', col_rejected:'Rejected',
+    col_empty:'Empty',
+    modal_details:'Details', modal_category:'Category', modal_benefit:'Benefit',
+    modal_urgency:'Urgency', modal_cost:'Cost', modal_submitted_by:'Submitted by',
+    modal_date:'Date', modal_assigned_to:'Assigned to', modal_role:'Role',
+    modal_target_month:'Target Month',
+    modal_assignment:'Assignment', assign_to:'Assign to',
+    role_lbl:'Role', start_date:'Start Date',
+    btn_save:'Save', btn_to_progress:'→ In Progress', btn_mark_done:'✓ Mark as Done',
+    target_month:'Target Month',
+    modal_vote:'Community Vote',
+    you:'you', vote_approve:'✓ Approve', vote_reject:'✗ Reject',
+    vote_priority:'↑ Priority', vote_no:'↓ No',
+    tally_approve:'Approve', tally_reject:'Reject',
+    tally_priority_yes:'Priority Yes', tally_priority_no:'Priority No',
+    hours_log:'Hours Log', hours_log_locked:'(available once In Progress)',
+    no_entries:'No entries yet.', who:'Who', hours:'Hours',
+    date:'Date', note:'Note', btn_log:'Log',
+    activity_timeline:'Activity Timeline', no_history:'No history yet.',
+    toast_vote:'Vote recorded!', toast_assign:'Assignment saved!',
+    toast_month:'Target month saved!', toast_progress:'Task is now In Progress!',
+    toast_done:'Task marked as Done! 🎉', toast_logged:'Hours logged!',
+    toast_submitted:'Task submitted! 🌱',
+    toast_select_user:'Select your name first.',
+    toast_fill_fields:'Title and category are required.',
+    toast_fill_hours:'Fill all hour log fields.',
+    executor:'Executor', monitor:'Monitor', subcontract:'Subcontract Coordinator',
+    vote_pending_count:'pending',
+    loading:'Connecting to FAIA…', firestore_error:'Could not connect to Firestore.\nCheck your config.',
+  },
+  pt: {
+    nav_dashboard:'Painel', nav_board:'Quadro de Tarefas',
+    nav_submit:'+ Nova Tarefa', nav_hourbank:'Banco de Horas',
+    select_member:'Selecionar membro…',
+    hero_greeting:'Bom ver-te,',
+    dash_needs_vote:'Precisa do Meu Voto', dash_assigned:'Atribuído a Mim',
+    dash_activity:'Actividade Recente',
+    all_caught_up:'Tudo em dia!', nothing_assigned:'Nada atribuído ainda.',
+    no_activity:'Sem actividade ainda.',
+    stat_pending:'Pendente', stat_progress:'Em Progresso', stat_done:'Concluído',
+    search_placeholder:'Pesquisar tarefas…',
+    all_categories:'Todas as categorias', all_benefits:'Todos os benefícios',
+    communal:'Comunal', personal:'Pessoal', other:'Outro',
+    form_title:'Submeter Nova Tarefa',
+    lbl_title:'Título *', lbl_desc:'Descrição', lbl_cat:'Categoria *',
+    lbl_cost:'Custo Estimado (€)', lbl_urgency:'Urgência',
+    lbl_benefit:'Tipo de Benefício', lbl_beneficiary:'Membro Beneficiário',
+    title_placeholder:'Título curto e descritivo',
+    desc_placeholder:'O que precisa de ser feito e porquê?',
+    select_ellipsis:'Selecionar…', planned:'Planeado', urgent:'Urgente',
+    btn_submit:'Submeter Tarefa', btn_clear:'Limpar',
+    hb_title:'Banco de Horas — Registo Comunitário',
+    hb_total:'Total de Horas Contribuídas',
+    hb_col_member:'Membro', hb_col_hours:'Total de Horas', hb_col_contrib:'Contribuição',
+    col_pending:'Votação Pendente', col_priority:'Fila Prioritária', col_backlog:'Backlog',
+    col_progress:'Em Progresso', col_done:'Concluído', col_rejected:'Rejeitado',
+    col_empty:'Vazio',
+    modal_details:'Detalhes', modal_category:'Categoria', modal_benefit:'Benefício',
+    modal_urgency:'Urgência', modal_cost:'Custo', modal_submitted_by:'Submetido por',
+    modal_date:'Data', modal_assigned_to:'Atribuído a', modal_role:'Função',
+    modal_target_month:'Mês Alvo',
+    modal_assignment:'Atribuição', assign_to:'Atribuir a',
+    role_lbl:'Função', start_date:'Data de Início',
+    btn_save:'Guardar', btn_to_progress:'→ Em Progresso', btn_mark_done:'✓ Marcar como Concluído',
+    target_month:'Mês Alvo',
+    modal_vote:'Votação Comunitária',
+    you:'tu', vote_approve:'✓ Aprovar', vote_reject:'✗ Rejeitar',
+    vote_priority:'↑ Prioritário', vote_no:'↓ Não',
+    tally_approve:'Aprovações', tally_reject:'Rejeições',
+    tally_priority_yes:'Prioridade Sim', tally_priority_no:'Prioridade Não',
+    hours_log:'Registo de Horas', hours_log_locked:'(disponível quando Em Progresso)',
+    no_entries:'Sem entradas ainda.', who:'Quem', hours:'Horas',
+    date:'Data', note:'Nota', btn_log:'Registar',
+    activity_timeline:'Cronologia de Actividade', no_history:'Sem histórico ainda.',
+    toast_vote:'Voto registado!', toast_assign:'Atribuição guardada!',
+    toast_month:'Mês alvo guardado!', toast_progress:'Tarefa em Progresso!',
+    toast_done:'Tarefa concluída! 🎉', toast_logged:'Horas registadas!',
+    toast_submitted:'Tarefa submetida! 🌱',
+    toast_select_user:'Seleciona o teu nome primeiro.',
+    toast_fill_fields:'Título e categoria são obrigatórios.',
+    toast_fill_hours:'Preenche todos os campos do registo de horas.',
+    executor:'Executor', monitor:'Monitor', subcontract:'Coordenador de Subcontratação',
+    vote_pending_count:'pendente',
+    loading:'A ligar ao FAIA…', firestore_error:'Não foi possível ligar ao Firestore.\nVerifica a configuração.',
+  }
+};
+
+let currentLang = localStorage.getItem('faiaLang') || 'en';
+function t(key){ return TRANSLATIONS[currentLang][key] || TRANSLATIONS.en[key] || key; }
+
+function applyLang(){
+  // static data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.dataset.i18n;
+    // preserve child elements (e.g. <span>*</span> in labels)
+    if(el.children.length===0) el.textContent = t(key);
+    else el.firstChild.textContent = t(key)+' ';
+  });
+  // placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  // lang buttons
+  document.getElementById('lang-en').classList.toggle('active', currentLang==='en');
+  document.getElementById('lang-pt').classList.toggle('active', currentLang==='pt');
+  // re-render dynamic sections
+  renderAll();
+}
+
+window._setLang = function(lang){
+  currentLang = lang;
+  localStorage.setItem('faiaLang', lang);
+  applyLang();
+};
+
+// ══════════════════════════════════════════════════════════
+//  APP STATE
+// ══════════════════════════════════════════════════════════
+const MEMBERS = ['Sergio','Steve','Conceição','Jenny','Luke'];
+const STATUSES = ['pending','approved','priority','backlog','progress','done','rejected'];
+
+let allTasks    = [];
+let currentUser = localStorage.getItem('faiaUser') || '';
+let openTaskId  = null;
+
+function COL_LABELS(){ return {
+  pending: t('col_pending'), priority: t('col_priority'), backlog: t('col_backlog'),
+  progress: t('col_progress'), done: t('col_done'), rejected: t('col_rejected')
+}; }
+function statusLabel(s){ return COL_LABELS()[s] || s; }
+
+const CAT_ICONS = {
+  'Regenerative / Land':'🌱','Infrastructure':'🔧',
+  'Green Tech / Aeroponics':'🧪','Community / Events':'🎉',
+  'Administration / Legal':'📋','Other':'◦'
+};
+
+// ══════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════
+function toast(msg, type='ok'){
+  const el = document.createElement('div');
+  el.className = 'toast' + (type==='error'?' error':'');
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(), 3500);
+}
+
+function fmtDate(ts){
+  if(!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtTime(ts){
+  if(!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+function statusClass(s){ return 'st-'+s; }
+
+function getVoteTally(task){
+  const votes = task.votes || {};
+  let ap=0,rj=0,py=0,pn=0;
+  MEMBERS.forEach(m=>{
+    const v = votes[m];
+    if(!v) return;
+    if(v.approve==='approve') ap++;
+    if(v.approve==='reject')  rj++;
+    if(v.priority==='yes')    py++;
+    if(v.priority==='no')     pn++;
+  });
+  return {ap,rj,py,pn};
+}
+
+function computeStatus(task){
+  // re-derive status from votes if still in pending
+  if(task.status !== 'pending') return task.status;
+  const {ap,rj} = getVoteTally(task);
+  const total = ap+rj;
+  if(ap >= 3){
+    const {py,pn} = getVoteTally(task);
+    return py >= 3 ? 'priority' : 'backlog';
+  }
+  if(rj >= 3) return 'rejected';
+  return 'pending';
+}
+
+function avatarLetter(name){ return name ? name[0].toUpperCase() : '?'; }
+
+// ══════════════════════════════════════════════════════════
+//  FIRESTORE LISTENER
+// ══════════════════════════════════════════════════════════
+function startListener(){
+  const q = query(collection(db,'tasks'), orderBy('submittedAt','desc'));
+  onSnapshot(q, snap => {
+    allTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderAll();
+    document.getElementById('loading-screen').style.display='none';
+  }, err=>{
+    console.error(err);
+    document.getElementById('loading-screen').innerHTML=
+      `<p style="color:#c48a8a;font-family:var(--font-serif)">${t('firestore_error').replace('\\n','<br>')}</p>`;
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════════════════════
+function renderAll(){
+  renderDashboard();
+  renderBoard();
+  renderHourBank();
+  if(openTaskId){
+    const t = allTasks.find(t=>t.id===openTaskId);
+    if(t) renderModal(t);
+  }
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────
+function renderDashboard(){
+  // hero
+  document.getElementById('hero-name').textContent = currentUser || 'friend';
+  document.getElementById('hero-date').textContent =
+    new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // stats
+  const pendingCount = allTasks.filter(x=>x.status==='pending').length;
+  const inprogCount  = allTasks.filter(x=>x.status==='progress').length;
+  const doneCount    = allTasks.filter(x=>x.status==='done').length;
+  document.getElementById('dash-stats').innerHTML = `
+    <div style="text-align:center;background:rgba(255,255,255,0.6);border-radius:10px;padding:0.6rem 1.1rem;border:1px solid var(--stone-light)">
+      <div style="font-size:1.5rem;font-family:var(--font-serif);color:var(--sage-dark)">${pendingCount}</div>
+      <div style="font-size:0.72rem;color:var(--text-muted)">${t('stat_pending')}</div>
+    </div>
+    <div style="text-align:center;background:rgba(255,255,255,0.6);border-radius:10px;padding:0.6rem 1.1rem;border:1px solid var(--stone-light)">
+      <div style="font-size:1.5rem;font-family:var(--font-serif);color:var(--earth)">${inprogCount}</div>
+      <div style="font-size:0.72rem;color:var(--text-muted)">${t('stat_progress')}</div>
+    </div>
+    <div style="text-align:center;background:rgba(255,255,255,0.6);border-radius:10px;padding:0.6rem 1.1rem;border:1px solid var(--stone-light)">
+      <div style="font-size:1.5rem;font-family:var(--font-serif);color:var(--sage-dark)">${doneCount}</div>
+      <div style="font-size:0.72rem;color:var(--text-muted)">${t('stat_done')}</div>
+    </div>`;
+
+  // needs my vote
+  const voteList = document.getElementById('dash-vote-list');
+  const needVote = currentUser
+    ? allTasks.filter(t=>t.status==='pending' && !(t.votes||{})[currentUser]?.approve)
+    : [];
+  document.getElementById('badge-vote').textContent = needVote.length;
+  if(!needVote.length){ voteList.innerHTML=`<p class="empty-state">${t('all_caught_up')}</p>`; }
+  else {
+    voteList.innerHTML = needVote.map(t=>`
+      <div class="mini-task" data-tid="${t.id}" style="cursor:pointer" onclick="window._openTask('${t.id}')">
+        <div class="dot" style="background:var(--s-pending)"></div>
+        <div class="info">
+          <strong>${escHtml(t.title)}</strong>
+          <span>${t.category||''} · ${fmtDate(t.submittedAt)}</span>
+        </div>
+        <span class="chip">${t.urgency||''}</span>
+      </div>`).join('');
+  }
+
+  // assigned to me
+  const assList = document.getElementById('dash-assigned-list');
+  const assigned = currentUser
+    ? allTasks.filter(t=>t.assignedTo===currentUser && t.status!=='done' && t.status!=='rejected')
+    : [];
+  document.getElementById('badge-assigned').textContent = assigned.length;
+  if(!assigned.length){ assList.innerHTML=`<p class="empty-state">${t('nothing_assigned')}</p>`; }
+  else {
+    assList.innerHTML = assigned.map(t=>`
+      <div class="mini-task" style="cursor:pointer" onclick="window._openTask('${t.id}')">
+        <div class="dot" style="background:var(--s-${t.status})"></div>
+        <div class="info">
+          <strong>${escHtml(t.title)}</strong>
+          <span>${t.category||''}</span>
+        </div>
+        <span class="chip status-chip ${statusClass(t.status)}">${statusLabel(t.status)}</span>
+      </div>`).join('');
+  }
+
+  // recent activity — aggregate from all tasks
+  const acts = [];
+  allTasks.forEach(t=>{
+    (t.activityLog||[]).forEach(a=>acts.push({...a,taskTitle:t.title,taskId:t.id}));
+  });
+  acts.sort((a,b)=>{
+    const ta = a.timestamp?.toMillis?.() || 0;
+    const tb = b.timestamp?.toMillis?.() || 0;
+    return tb - ta;
+  });
+  const actEl = document.getElementById('dash-activity');
+  if(!acts.length){ actEl.innerHTML=`<p class="empty-state">${t('no_activity')}</p>`; return; }
+  actEl.innerHTML = acts.slice(0,20).map(a=>`
+    <div class="activity-item">
+      <strong>${escHtml(a.actor||'?')}</strong> ${escHtml(a.action||'')}
+      — <em style="font-size:0.8rem">${escHtml(a.taskTitle||'')}</em>
+      <span class="ts">${fmtTime(a.timestamp)}</span>
+    </div>`).join('');
+}
+
+// ── BOARD ───────────────────────────────────────────────────
+function renderBoard(){
+  const search   = (document.getElementById('board-search')?.value||'').toLowerCase();
+  const filterCat= document.getElementById('board-filter-cat')?.value||'';
+  const filterBen= document.getElementById('board-filter-benefit')?.value||'';
+
+  let tasks = allTasks;
+  if(search)     tasks = tasks.filter(t=>(t.title+t.description).toLowerCase().includes(search));
+  if(filterCat)  tasks = tasks.filter(t=>t.category===filterCat);
+  if(filterBen)  tasks = tasks.filter(t=>t.benefitType===filterBen);
+
+  const cols = ['pending','priority','backlog','progress','done','rejected'];
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = cols.map(st=>{
+    const cards = tasks.filter(t=>{
+      const eff = computeStatus(t);
+      return st==='pending' ? eff==='pending' : t.status===st;
+    });
+    return `
+    <div class="kanban-col col-${st}">
+      <div class="kanban-col-head">
+        <span>${statusLabel(st)}</span>
+        <span class="count">${cards.length}</span>
+      </div>
+      <div class="kanban-cards" id="col-${st}">
+        ${cards.map(t=>taskCard(t)).join('')}
+        ${cards.length===0?`<div style="color:var(--text-light);font-size:0.78rem;padding:0.5rem;font-style:italic">${t('col_empty')}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // attach click handlers
+  board.querySelectorAll('.task-card').forEach(el=>{
+    el.addEventListener('click',()=>window._openTask(el.dataset.tid));
+  });
+}
+
+function taskCard(t){
+  const {ap,rj} = getVoteTally(t);
+  const eff = computeStatus(t);
+  const urgCol = t.urgency==='Urgent'?'var(--s-priority)':'var(--sage)';
+  return `<div class="task-card" data-tid="${t.id}" style="--card-border:${urgCol}">
+    <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${urgCol};border-radius:2px 0 0 2px"></div>
+    <h4>${escHtml(t.title)}</h4>
+    <div class="meta">
+      ${t.category?`<span class="tag">${CAT_ICONS[t.category]||'◦'} ${escHtml(t.category)}</span>`:''}
+      ${t.urgency==='Urgent'?`<span class="tag urgent">⚡ ${t('urgent')}</span>`:''}
+      ${t.benefitType?`<span class="tag ${t.benefitType.toLowerCase()}">${t.benefitType==='Communal'?t('communal'):t('personal')}</span>`:''}
+    </div>
+    ${t.estimatedCost?`<div class="cost-tag">€${Number(t.estimatedCost).toFixed(2)}</div>`:''}
+    ${t.status==='pending'?`<div class="vote-mini">✓ ${ap} · ✗ ${rj} · ${5-ap-rj} ${t('vote_pending_count')}</div>`:''}
+    ${t.assignedTo?`<div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem;padding-left:0.5rem">👤 ${escHtml(t.assignedTo)}</div>`:''}
+  </div>`;
+}
+
+// ── HOUR BANK ───────────────────────────────────────────────
+function renderHourBank(){
+  const totals = {};
+  MEMBERS.forEach(m=>totals[m]=0);
+  allTasks.forEach(t=>{
+    (t.hoursLog||[]).forEach(h=>{
+      if(totals[h.member]!==undefined) totals[h.member]+=Number(h.hours)||0;
+    });
+  });
+  const max = Math.max(...Object.values(totals),1);
+  const tbody = document.getElementById('hb-tbody');
+  tbody.innerHTML = MEMBERS.map(m=>`
+    <tr>
+      <td style="display:flex;align-items:center;gap:0.6rem">
+        <div class="avatar" style="width:28px;height:28px;font-size:0.7rem">${avatarLetter(m)}</div>
+        ${escHtml(m)}
+      </td>
+      <td><span class="hb-total">${totals[m].toFixed(1)}h</span></td>
+      <td style="width:40%">
+        <div class="hb-bar"><div class="hb-bar-fill" style="width:${(totals[m]/max*100).toFixed(1)}%"></div></div>
+      </td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════════════════════
+window._openTask = function(id){
+  const t = allTasks.find(t=>t.id===id);
+  if(!t) return;
+  openTaskId = id;
+  renderModal(t);
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+};
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+  openTaskId = null;
+}
+
+function renderModal(t){
+  document.getElementById('modal-task-title').textContent = t.title||'Task';
+  const chip = document.getElementById('modal-status-chip');
+  chip.className = `status-chip ${statusClass(t.status||'pending')}`;
+  chip.textContent = statusLabel(t.status||'pending');
+
+  const eff = computeStatus(t);
+  const {ap,rj,py,pn} = getVoteTally(t);
+  const votes = t.votes||{};
+  const isAssignable = ['approved','priority','backlog'].includes(t.status);
+  const isLoggable   = ['progress','done'].includes(t.status);
+
+  document.getElementById('modal-body').innerHTML = `
+  <!-- META -->
+  <div class="modal-section">
+    <h3>${t('modal_details')}</h3>
+    ${t.description?`<p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:0.75rem">${escHtml(t.description)}</p>`:''}
+    <div class="meta-grid">
+      <div class="meta-item"><label>${t('modal_category')}</label><strong>${escHtml(t.category||'—')}</strong></div>
+      <div class="meta-item"><label>${t('modal_benefit')}</label><strong>${escHtml(t.benefitType||'—')}${t.beneficiaryMember?' ('+escHtml(t.beneficiaryMember)+')':''}</strong></div>
+      <div class="meta-item"><label>${t('modal_urgency')}</label><strong>${escHtml(t.urgency||'—')}</strong></div>
+      <div class="meta-item"><label>${t('modal_cost')}</label><strong>${t.estimatedCost?'€'+Number(t.estimatedCost).toFixed(2):'—'}</strong></div>
+      <div class="meta-item"><label>${t('modal_submitted_by')}</label><strong>${escHtml(t.submittedBy||'—')}</strong></div>
+      <div class="meta-item"><label>${t('modal_date')}</label><strong>${fmtDate(t.submittedAt)}</strong></div>
+      ${t.assignedTo?`<div class="meta-item"><label>${t('modal_assigned_to')}</label><strong>${escHtml(t.assignedTo)}</strong></div>`:''}
+      ${t.assignedRole?`<div class="meta-item"><label>${t('modal_role')}</label><strong>${escHtml(t.assignedRole)}</strong></div>`:''}
+      ${t.targetMonth?`<div class="meta-item"><label>${t('modal_target_month')}</label><strong>${escHtml(t.targetMonth)}</strong></div>`:''}
+    </div>
+  </div>
+
+  <!-- STATUS ACTIONS -->
+  ${isAssignable?`
+  <div class="modal-section" id="section-assign">
+    <h3>${t('modal_assignment')}</h3>
+    <div class="assign-form">
+      <div class="field-group">
+        <label>${t('assign_to')}</label>
+        <select id="m-assign-to">
+          <option value="">${t('select_ellipsis')}</option>
+          ${MEMBERS.map(m=>`<option${t.assignedTo===m?' selected':''}>${escAttr(m)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group">
+        <label>${t('role_lbl')}</label>
+        <select id="m-assign-role">
+          <option value="">${t('select_ellipsis')}</option>
+          <option${t.assignedRole==='Executor'?' selected':''}>${t('executor')}</option>
+          <option${t.assignedRole==='Monitor'?' selected':''}>${t('monitor')}</option>
+          <option${t.assignedRole==='Subcontract Coordinator'?' selected':''}>${t('subcontract')}</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>${t('start_date')}</label>
+        <input type="date" id="m-start-date" value="${t.startDate||''}"/>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="window._saveAssign('${t.id}')">${t('btn_save')}</button>
+      <button class="btn btn-primary btn-sm" onclick="window._moveToProgress('${t.id}')">${t('btn_to_progress')}</button>
+    </div>
+    ${t.status==='backlog'?`
+    <div style="margin-top:0.75rem;display:flex;gap:0.65rem;align-items:flex-end">
+      <div class="field-group" style="min-width:160px">
+        <label>${t('target_month')}</label>
+        <input type="month" id="m-target-month" value="${t.targetMonth||''}"/>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="window._saveTargetMonth('${t.id}')">${t('btn_save')}</button>
+    </div>`:''}
+  </div>`:''}
+
+  ${t.status==='progress'?`
+  <div class="modal-section">
+    <h3>Status</h3>
+    <button class="btn btn-primary btn-sm" onclick="window._markDone('${t.id}')">${t('btn_mark_done')}</button>
+  </div>`:''}
+
+  <!-- VOTING (only for pending tasks) -->
+  ${(t.status==='pending'||eff==='pending')?`
+  <div class="modal-section" id="section-vote">
+    <h3>${t('modal_vote')}</h3>
+    <div class="vote-grid" id="vote-grid-${t.id}">
+      ${MEMBERS.map(m=>{
+        const mv = votes[m]||{};
+        const canVote = (m===currentUser);
+        return `<div class="vote-row">
+          <span class="vname">${escHtml(m)}${m===currentUser?` (${t('you')})`:''}</span>
+          <div class="vote-btns">
+            <button class="approve${mv.approve==='approve'?' sel':''}"
+              onclick="${canVote?`window._castVote('${t.id}','${m}','approve','approve')`:''}">
+              ${t('vote_approve')}
+            </button>
+            <button class="reject${mv.approve==='reject'?' sel':''}"
+              onclick="${canVote?`window._castVote('${t.id}','${m}','approve','reject')`:''}">
+              ${t('vote_reject')}
+            </button>
+            <span class="vote-sep"></span>
+            <button class="pyes${mv.priority==='yes'?' sel':''}"
+              onclick="${canVote?`window._castVote('${t.id}','${m}','priority','yes')`:''}">
+              ${t('vote_priority')}
+            </button>
+            <button class="pno${mv.priority==='no'?' sel':''}"
+              onclick="${canVote?`window._castVote('${t.id}','${m}','priority','no')`:''}">
+              ${t('vote_no')}
+            </button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="tally-bar">
+      <span>${t('tally_approve')}: <span class="tally-val">${ap}</span></span>
+      <span>${t('tally_reject')}:  <span class="tally-val">${rj}</span></span>
+      <span>${t('tally_priority_yes')}: <span class="tally-val">${py}</span></span>
+      <span>${t('tally_priority_no')}:  <span class="tally-val">${pn}</span></span>
+    </div>
+  </div>`:''}
+
+  <!-- HOURS LOG -->
+  <div class="modal-section">
+    <h3>${t('hours_log')} ${isLoggable||t.status==='done'?'':t('hours_log_locked')}</h3>
+    <div id="hours-list-${t.id}">
+      ${(t.hoursLog||[]).length===0?`<p class="empty-state">${t('no_entries')}</p>`:
+        (t.hoursLog||[]).map(h=>`
+        <div class="hours-entry">
+          <div class="hw">${escHtml(h.member)}</div>
+          <div class="hn">${escHtml(h.note||'—')}<div style="font-size:0.72rem;color:var(--text-light)">${h.date||''}</div></div>
+          <div class="hh">${h.hours}h</div>
+        </div>`).join('')}
+    </div>
+    ${(isLoggable||t.status==='done')?`
+    <div class="log-form">
+      <div class="field-group">
+        <label>${t('who')}</label>
+        <select id="m-log-who">
+          ${MEMBERS.map(m=>`<option${m===currentUser?' selected':''}>${escAttr(m)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group" style="min-width:70px">
+        <label>${t('hours')}</label>
+        <input type="number" id="m-log-hours" placeholder="2" min="0.5" step="0.5"/>
+      </div>
+      <div class="field-group">
+        <label>${t('date')}</label>
+        <input type="date" id="m-log-date" value="${new Date().toISOString().split('T')[0]}"/>
+      </div>
+      <div class="field-group" style="flex:2">
+        <label>${t('note')}</label>
+        <input type="text" id="m-log-note" placeholder="${t('desc_placeholder')}"/>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="window._logHours('${t.id}')">${t('btn_log')}</button>
+    </div>`:''}
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div class="modal-section">
+    <h3>${t('activity_timeline')}</h3>
+    <div class="activity-log">
+      ${(t.activityLog||[]).slice().reverse().map(a=>`
+      <div class="al-item">
+        <strong>${escHtml(a.actor||'System')}</strong> — ${escHtml(a.action||'')}
+        <div class="alt">${fmtTime(a.timestamp)}</div>
+      </div>`).join('')||`<p class="empty-state">${t('no_history')}</p>`}
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════════════════
+window._castVote = async function(taskId, member, field, value){
+  if(!currentUser){ toast(t('toast_select_user'),'error'); return; }
+  if(member !== currentUser){ return; }
+  try{
+    const task = allTasks.find(t=>t.id===taskId);
+    if(!task) return;
+    const votes = structuredClone(task.votes||{});
+    if(!votes[member]) votes[member]={};
+    votes[member][field] = value;
+
+    const actLog = structuredClone(task.activityLog||[]);
+    actLog.push({
+      timestamp: new Date(),
+      actor: currentUser,
+      action: `voted ${field==='approve'?value:'priority='+value} on this task`
+    });
+
+    // compute new status
+    let newStatus = task.status;
+    const ap = MEMBERS.filter(m=>votes[m]?.approve==='approve').length;
+    const rj = MEMBERS.filter(m=>votes[m]?.approve==='reject').length;
+    if(task.status==='pending'){
+      if(ap>=3){
+        const py = MEMBERS.filter(m=>votes[m]?.priority==='yes').length;
+        newStatus = py>=3?'priority':'backlog';
+        if(newStatus!==task.status) actLog.push({timestamp:new Date(),actor:'System',action:`Task moved to ${statusLabel(newStatus)}`});
+      }
+      if(rj>=3){
+        newStatus='rejected';
+        actLog.push({timestamp:new Date(),actor:'System',action:'Task rejected by majority vote'});
+      }
+    }
+
+    await updateDoc(doc(db,'tasks',taskId),{
+      votes, activityLog:actLog, status:newStatus
+    });
+    toast(t('toast_vote'));
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+window._saveAssign = async function(taskId){
+  if(!currentUser){ toast(t('toast_select_user'),'error'); return; }
+  const to   = document.getElementById('m-assign-to')?.value;
+  const role = document.getElementById('m-assign-role')?.value;
+  const sd   = document.getElementById('m-start-date')?.value;
+  try{
+    const task = allTasks.find(t=>t.id===taskId);
+    const actLog = structuredClone(task.activityLog||[]);
+    actLog.push({timestamp:new Date(),actor:currentUser,
+      action:`assigned task to ${to||'?'} as ${role||'?'}`});
+    await updateDoc(doc(db,'tasks',taskId),{
+      assignedTo:to, assignedRole:role, startDate:sd, activityLog:actLog
+    });
+    toast(t('toast_assign'));
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+window._saveTargetMonth = async function(taskId){
+  const tm = document.getElementById('m-target-month')?.value;
+  try{
+    await updateDoc(doc(db,'tasks',taskId),{targetMonth:tm});
+    toast(t('toast_month'));
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+window._moveToProgress = async function(taskId){
+  if(!currentUser){ toast(t('toast_select_user'),'error'); return; }
+  try{
+    const task = allTasks.find(t=>t.id===taskId);
+    const actLog = structuredClone(task.activityLog||[]);
+    actLog.push({timestamp:new Date(),actor:currentUser,action:'moved task to In Progress'});
+    await updateDoc(doc(db,'tasks',taskId),{status:'progress',activityLog:actLog});
+    toast(t('toast_progress'));
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+window._markDone = async function(taskId){
+  if(!currentUser){ toast(t('toast_select_user'),'error'); return; }
+  try{
+    const task = allTasks.find(t=>t.id===taskId);
+    const actLog = structuredClone(task.activityLog||[]);
+    actLog.push({timestamp:new Date(),actor:currentUser,action:'marked task as Done'});
+    await updateDoc(doc(db,'tasks',taskId),{status:'done',activityLog:actLog});
+    toast(t('toast_done'));
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+window._logHours = async function(taskId){
+  if(!currentUser){ toast(t('toast_select_user'),'error'); return; }
+  const who   = document.getElementById('m-log-who')?.value;
+  const hours = parseFloat(document.getElementById('m-log-hours')?.value);
+  const date  = document.getElementById('m-log-date')?.value;
+  const note  = document.getElementById('m-log-note')?.value;
+  if(!who||!hours||!date){ toast(t('toast_fill_hours'),'error'); return; }
+  try{
+    const task = allTasks.find(t=>t.id===taskId);
+    const hoursLog  = structuredClone(task.hoursLog||[]);
+    const actLog    = structuredClone(task.activityLog||[]);
+    hoursLog.push({member:who,hours,date,note});
+    actLog.push({timestamp:new Date(),actor:currentUser,
+      action:`logged ${hours}h of work`});
+    await updateDoc(doc(db,'tasks',taskId),{hoursLog,activityLog:actLog});
+    toast(t('toast_logged'));
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+// ── SUBMIT TASK ─────────────────────────────────────────────
+document.getElementById('submit-task-btn').addEventListener('click', async ()=>{
+  if(!currentUser){ toast(t('toast_select_user'),'error'); return; }
+  const title  = document.getElementById('f-title').value.trim();
+  const cat    = document.getElementById('f-cat').value;
+  if(!title||!cat){ toast(t('toast_fill_fields'),'error'); return; }
+  const benefit = document.querySelector('input[name=benefit]:checked')?.value||'Communal';
+  const urgency = document.querySelector('input[name=urgency]:checked')?.value||'Planned';
+  const task = {
+    title,
+    description: document.getElementById('f-desc').value.trim(),
+    category:    cat,
+    benefitType: benefit,
+    beneficiaryMember: benefit==='Personal'?document.getElementById('f-beneficiary').value:'',
+    estimatedCost: document.getElementById('f-cost').value||'',
+    urgency,
+    submittedBy:  currentUser,
+    submittedAt:  serverTimestamp(),
+    status:       'pending',
+    votes:        {},
+    hoursLog:     [],
+    activityLog:  [{timestamp:new Date(),actor:currentUser,action:'submitted this task'}]
+  };
+  try{
+    await addDoc(collection(db,'tasks'),task);
+    toast(t('toast_submitted'));
+    document.getElementById('f-title').value='';
+    document.getElementById('f-desc').value='';
+    document.getElementById('f-cat').value='';
+    document.getElementById('f-cost').value='';
+    switchPage('board');
+  }catch(e){ toast('Error: '+e.message,'error'); }
+});
+
+document.getElementById('clear-form-btn').addEventListener('click',()=>{
+  document.getElementById('f-title').value='';
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-cat').value='';
+  document.getElementById('f-cost').value='';
+});
+
+// beneficiary toggle
+document.querySelectorAll('input[name=benefit]').forEach(r=>{
+  r.addEventListener('change',()=>{
+    document.getElementById('beneficiary-row').style.display =
+      document.getElementById('rb-personal').checked?'block':'none';
+  });
+});
+
+// ══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════
+function switchPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.getElementById('nav-'+name)?.classList.add('active');
+}
+
+document.querySelectorAll('#main-nav button').forEach(btn=>{
+  btn.addEventListener('click',()=>switchPage(btn.dataset.page));
+});
+
+// board filters
+document.getElementById('board-search')?.addEventListener('input', renderBoard);
+document.getElementById('board-filter-cat')?.addEventListener('change', renderBoard);
+document.getElementById('board-filter-benefit')?.addEventListener('change', renderBoard);
+
+// modal close
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e=>{
+  if(e.target===document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+// user select
+const userSel = document.getElementById('user-select');
+userSel.value = currentUser;
+userSel.addEventListener('change', ()=>{
+  currentUser = userSel.value;
+  localStorage.setItem('faiaUser', currentUser);
+  document.getElementById('user-avatar').textContent = avatarLetter(currentUser);
+  renderAll();
+});
+if(currentUser){
+  document.getElementById('user-avatar').textContent = avatarLetter(currentUser);
+}
+
+// hero date
+document.getElementById('hero-date').textContent =
+  new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+// ══════════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════════
+function escHtml(s){
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s){ return escHtml(s); }
+
+// ══════════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════════
+applyLang();
+startListener();
+
+</script>
+</body>
+</html>
