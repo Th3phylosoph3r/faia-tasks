@@ -2340,10 +2340,14 @@ async function sendChatMessage(userText){
     const resp = await fetch('https://api.cerebras.ai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${CEREBRAS_KEY}`},
-      body:JSON.stringify({model:'gpt-oss-120b',messages:payload,
+      body:JSON.stringify({model:'llama3.1-8b',messages:payload,
         max_completion_tokens:512,temperature:0.3,stream:false})
     });
     const data = await resp.json();
+    if(!resp.ok){
+      const errMsg = data.error?.message || data.message || `API error ${resp.status}`;
+      throw new Error(errMsg);
+    }
     const reply = data.choices?.[0]?.message?.content || 'Sorry, no response.';
     chatHistory.push({role:'assistant',content:reply});
     typing.remove();
@@ -2354,7 +2358,7 @@ async function sendChatMessage(userText){
     typing.remove();
     const ab = document.createElement('div');
     ab.className='cm ai';
-    ab.textContent='⚠ Connection error. Check your internet connection.';
+    ab.textContent=`⚠ ${err.message}`;
     msgs.appendChild(ab);
   }
   msgs.scrollTop=msgs.scrollHeight;
