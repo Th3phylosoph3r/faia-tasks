@@ -1026,7 +1026,7 @@ const firebaseConfig = {
 // ── Firebase SDK (CDN, no npm) ──────────────────────────────
 import { initializeApp }              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc,
-         onSnapshot, addDoc, updateDoc,
+         onSnapshot, addDoc, updateDoc, deleteDoc,
          serverTimestamp, query, orderBy
        }                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -1210,14 +1210,21 @@ function toast(msg, type='ok'){
   setTimeout(()=>el.remove(), 3500);
 }
 
+function _tsToDate(ts){
+  if(!ts) return null;
+  if(ts.toDate) return ts.toDate();           // Firestore Timestamp
+  if(ts.seconds) return new Date(ts.seconds*1000); // plain {seconds,nanoseconds}
+  if(ts instanceof Date) return ts;
+  return new Date(ts);
+}
 function fmtDate(ts){
-  if(!ts) return '—';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const d = _tsToDate(ts);
+  if(!d||isNaN(d)) return '—';
   return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 }
 function fmtTime(ts){
-  if(!ts) return '';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const d = _tsToDate(ts);
+  if(!d||isNaN(d)) return '';
   return d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
 }
 
@@ -1375,7 +1382,7 @@ function renderDashboard(){
   if(!acts.length){ actEl.innerHTML=`<p class="empty-state">${tr('no_activity')}</p>`; return; }
   actEl.innerHTML = acts.slice(0,20).map(a=>`
     <div class="activity-item">
-      <strong>${escHtml(a.actor||'?')}</strong> ${escHtml(a.action||'')}
+      <strong>${escHtml(displayName(a.actor||'?'))}</strong> ${escHtml(a.action||'')}
       — <em style="font-size:0.8rem">${escHtml(a.taskTitle||'')}</em>
       <span class="ts">${fmtTime(a.timestamp)}</span>
     </div>`).join('');
@@ -1561,7 +1568,7 @@ function renderModal(t){
         const mv = votes[m]||{};
         const canVote = (m===currentUser);
         return `<div class="vote-row">
-          <span class="vname">${escHtml(m)}${m===currentUser?` (${tr('you')})`:''}</span>
+          <span class="vname">${escHtml(displayName(m))}${m===currentUser?` (${tr('you')})`:''}</span>
           <div class="vote-btns">
             <button class="approve${mv.approve==='approve'?' sel':''}"
               onclick="${canVote?`window._castVote('${t.id}','${m}','approve','approve')`:''}">
@@ -1634,16 +1641,38 @@ function renderModal(t){
     <div class="activity-log">
       ${(t.activityLog||[]).slice().reverse().map(a=>`
       <div class="al-item">
-        <strong>${escHtml(a.actor||'System')}</strong> — ${escHtml(a.action||'')}
+        <strong>${escHtml(displayName(a.actor||'System'))}</strong> — ${escHtml(a.action||'')}
         <div class="alt">${fmtTime(a.timestamp)}</div>
       </div>`).join('')||`<p class="empty-state">${tr('no_history')}</p>`}
     </div>
-  </div>`;
+  </div>
+
+  <!-- DELETE TASK -->
+  ${['pending','approved','priority','backlog'].includes(t.status)?`
+  <div class="modal-section" style="border-top:1px solid var(--stone-light);padding-top:1rem;margin-top:0.5rem">
+    <button class="btn btn-sm" style="background:none;border:1px solid var(--s-rejected);color:var(--s-rejected);font-size:0.78rem" onclick="window._deleteTask('${t.id}')">🗑 Delete this task</button>
+    <span style="font-size:0.72rem;color:var(--text-light);margin-left:0.5rem">Only possible before In Progress</span>
+  </div>`:''}`;
 }
 
 // ══════════════════════════════════════════════════════════
 //  ACTIONS
 // ══════════════════════════════════════════════════════════
+window._deleteTask = async function(taskId){
+  if(!currentUser){ toast(tr('toast_select_user'),'error'); return; }
+  const task = allTasks.find(t=>t.id===taskId);
+  if(!task) return;
+  if(!['pending','approved','priority','backlog'].includes(task.status)){
+    toast('Cannot delete a task that is already In Progress.','error'); return;
+  }
+  const confirmed = confirm(`Delete "${task.title}"?\nThis cannot be undone.`);
+  if(!confirmed) return;
+  try{
+    await deleteDoc(doc(db,'tasks',taskId));
+    closeModal();
+    toast('Task deleted. 🗑');
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
 window._castVote = async function(taskId, member, field, value){
   if(!currentUser){ toast(tr('toast_select_user'),'error'); return; }
   if(member !== currentUser){ return; }
@@ -2120,7 +2149,6 @@ document.getElementById('pc-save').addEventListener('click',()=>{
 // ══════════════════════════════════════════════════════════
 initSecurity();
 
-  
 </script>
 </body>
 </html>
