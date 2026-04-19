@@ -687,7 +687,105 @@ textarea{resize:vertical;min-height:80px}
   padding:0.5rem;max-width:200px;
 }
 #pin-change-form.visible{display:flex}
-.avatar-btn{cursor:pointer;} 
+.avatar-btn{cursor:pointer;}
+
+/* ════════════════════════════════
+   ADMIN
+════════════════════════════════ */
+.admin-badge{
+  display:inline-flex;align-items:center;gap:0.3rem;
+  font-size:0.65rem;font-weight:700;letter-spacing:0.06em;
+  background:linear-gradient(135deg,var(--sage-dark),var(--earth));
+  color:#fff;padding:0.15rem 0.55rem;border-radius:20px;
+  margin-left:0.5rem;vertical-align:middle;
+}
+.admin-hour-del,.admin-hour-edit{
+  background:none;border:none;cursor:pointer;
+  font-size:0.8rem;padding:0.2rem 0.4rem;
+  border-radius:4px;opacity:0.7;transition:opacity 0.15s;line-height:1;
+}
+.admin-hour-del{color:var(--s-rejected)}
+.admin-hour-edit{color:var(--sage-dark)}
+.admin-hour-del:hover,.admin-hour-edit:hover{opacity:1}
+
+/* ════════════════════════════════
+   AI CHATBOT
+════════════════════════════════ */
+#chat-bubble{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:500;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--sage-dark),var(--earth));
+  border:none;cursor:pointer;box-shadow:var(--shadow-md);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;transition:transform 0.2s,box-shadow 0.2s;
+  -webkit-tap-highlight-color:transparent;
+}
+#chat-bubble:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(58,53,48,0.25)}
+#chat-badge{
+  position:absolute;top:-3px;right:-3px;width:13px;height:13px;
+  background:var(--s-priority);border-radius:50%;border:2px solid var(--cream);
+  display:none;
+}
+#chat-badge.show{display:block}
+#chat-window{
+  position:fixed;bottom:5.5rem;right:1.5rem;z-index:500;
+  width:340px;max-width:calc(100vw - 2rem);
+  background:var(--cream);border:1px solid var(--stone-light);
+  border-radius:var(--radius);box-shadow:0 8px 32px rgba(58,53,48,0.18);
+  display:none;flex-direction:column;overflow:hidden;
+  animation:slideUp 0.2s ease;
+}
+#chat-window.open{display:flex}
+#chat-header{
+  background:linear-gradient(135deg,var(--sage-dark),var(--earth));
+  color:#fff;padding:0.85rem 1rem;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.ch-title{font-family:var(--font-serif);font-size:1rem;font-weight:600}
+.ch-sub{font-size:0.72rem;opacity:0.8;margin-top:0.1rem}
+#chat-close{background:none;border:none;color:#fff;cursor:pointer;font-size:1.1rem;opacity:0.8;padding:0}
+#chat-close:hover{opacity:1}
+#chat-messages{
+  flex:1;overflow-y:auto;padding:0.85rem;
+  display:flex;flex-direction:column;gap:0.65rem;
+  min-height:220px;max-height:360px;scroll-behavior:smooth;
+}
+.cm{
+  max-width:88%;padding:0.55rem 0.85rem;
+  border-radius:14px;font-size:0.84rem;line-height:1.5;word-wrap:break-word;
+}
+.cm.user{align-self:flex-end;background:var(--sage-dark);color:#fff;border-radius:14px 14px 4px 14px}
+.cm.ai{align-self:flex-start;background:#fff;color:var(--text-primary);
+  border:1px solid var(--stone-light);border-radius:14px 14px 14px 4px}
+.cm.typing{align-self:flex-start;background:#fff;border:1px solid var(--stone-light);
+  border-radius:14px 14px 14px 4px;padding:0.65rem 1rem}
+.typing-dots span{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--stone);margin:0 1px;animation:typingBounce 1.2s infinite;
+}
+.typing-dots span:nth-child(2){animation-delay:0.2s}
+.typing-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes typingBounce{
+  0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}
+}
+#chat-input-row{
+  padding:0.65rem 0.75rem;border-top:1px solid var(--stone-light);
+  display:flex;gap:0.5rem;flex-shrink:0;background:var(--cream);
+}
+#chat-input{
+  flex:1;border:1px solid var(--stone-light);border-radius:20px;
+  padding:0.5rem 0.9rem;font-family:var(--font-sans);font-size:0.83rem;
+  background:var(--parchment);color:var(--text-primary);outline:none;
+}
+#chat-input:focus{border-color:var(--sage)}
+#chat-send{
+  width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:none;
+  background:var(--sage-dark);color:#fff;cursor:pointer;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;transition:background var(--transition);
+}
+#chat-send:hover{background:var(--earth)}
+#chat-send:disabled{opacity:0.45;cursor:not-allowed}
+.chat-empty{color:var(--text-light);font-size:0.78rem;text-align:center;margin:auto;font-style:italic;padding:1rem}
 </style>
 </head>
 <body>
@@ -1006,6 +1104,8 @@ textarea{resize:vertical;min-height:80px}
 // │  Members can change their own PIN from their profile.   │
 // └─────────────────────────────────────────────────────────┘
 const APP_PASSWORD  = 'raiz2024';     // ← change me!
+const ADMIN_USER    = 'Sergio';        // ← system administrator
+const CEREBRAS_KEY  = 'csk-xy6cr82xj348dxeneh9kcyy3ekyh3nyfnkf42n44f6xx96we';
 const DEFAULT_PINS  = {
   'Sergio':    '111111',              // ← distribute secretly
   'Steve':     '222222',
@@ -1604,11 +1704,15 @@ function renderModal(t){
     <h3>${tr('hours_log')} ${isLoggable||t.status==='done'?'':tr('hours_log_locked')}</h3>
     <div id="hours-list-${t.id}">
       ${(t.hoursLog||[]).length===0?`<p class="empty-state">${tr('no_entries')}</p>`:
-        (t.hoursLog||[]).map(h=>`
+        (t.hoursLog||[]).map((h,hi)=>`
         <div class="hours-entry">
           <div class="hw">${escHtml(h.member)}</div>
           <div class="hn">${escHtml(h.note||'—')}<div style="font-size:0.72rem;color:var(--text-light)">${h.date||''}</div></div>
           <div class="hh">${h.hours}h</div>
+          ${currentUser===ADMIN_USER?`
+            <button class="admin-hour-edit" title="Edit hours" onclick="window._editHourEntry('${t.id}',${hi},${h.hours})">&#9998;</button>
+            <button class="admin-hour-del" title="Delete entry" onclick="window._deleteHourEntry('${t.id}',${hi})">&times;</button>
+          `:''}
         </div>`).join('')}
     </div>
     ${(isLoggable||t.status==='done')?`
@@ -1648,10 +1752,11 @@ function renderModal(t){
   </div>
 
   <!-- DELETE TASK -->
-  ${['pending','approved','priority','backlog'].includes(t.status)?`
+  ${(currentUser===ADMIN_USER||['pending','approved','priority','backlog'].includes(t.status))?`
   <div class="modal-section" style="border-top:1px solid var(--stone-light);padding-top:1rem;margin-top:0.5rem">
     <button class="btn btn-sm" style="background:none;border:1px solid var(--s-rejected);color:var(--s-rejected);font-size:0.78rem" onclick="window._deleteTask('${t.id}')">🗑 Delete this task</button>
-    <span style="font-size:0.72rem;color:var(--text-light);margin-left:0.5rem">Only possible before In Progress</span>
+    ${currentUser===ADMIN_USER?`<span class="admin-badge">★ Admin</span>`:''}
+    <span style="font-size:0.72rem;color:var(--text-light);margin-left:0.5rem">${currentUser===ADMIN_USER?'Admin can delete at any stage':'Only possible before In Progress'}</span>
   </div>`:''}`;
 }
 
@@ -1662,7 +1767,8 @@ window._deleteTask = async function(taskId){
   if(!currentUser){ toast(tr('toast_select_user'),'error'); return; }
   const task = allTasks.find(t=>t.id===taskId);
   if(!task) return;
-  if(!['pending','approved','priority','backlog'].includes(task.status)){
+  const isAdmin = currentUser===ADMIN_USER;
+  if(!isAdmin && !['pending','approved','priority','backlog'].includes(task.status)){
     toast('Cannot delete a task that is already In Progress.','error'); return;
   }
   const confirmed = confirm(`Delete "${task.title}"?\nThis cannot be undone.`);
@@ -1671,6 +1777,42 @@ window._deleteTask = async function(taskId){
     await deleteDoc(doc(db,'tasks',taskId));
     closeModal();
     toast('Task deleted. 🗑');
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+window._deleteHourEntry = async function(taskId, index){
+  if(currentUser!==ADMIN_USER){ toast('Admin only.','error'); return; }
+  const task = allTasks.find(t=>t.id===taskId);
+  if(!task) return;
+  if(!confirm('Delete this hour entry?')) return;
+  try{
+    const hoursLog = structuredClone(task.hoursLog||[]);
+    const removed = hoursLog.splice(index,1)[0];
+    const actLog = structuredClone(task.activityLog||[]);
+    actLog.push({timestamp:new Date(),actor:currentUser,
+      action:`[Admin] removed ${removed.hours}h entry for ${removed.member}`});
+    await updateDoc(doc(db,'tasks',taskId),{hoursLog,activityLog:actLog});
+    toast('Hour entry deleted.');
+  }catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+window._editHourEntry = async function(taskId, index, currentHours){
+  if(currentUser!==ADMIN_USER){ toast('Admin only.','error'); return; }
+  const newVal = prompt(`Adjust hours (currently: ${currentHours}h):`, currentHours);
+  if(newVal===null) return;
+  const parsed = parseFloat(newVal);
+  if(isNaN(parsed)||parsed<=0){ toast('Invalid number.','error'); return; }
+  const task = allTasks.find(t=>t.id===taskId);
+  if(!task) return;
+  try{
+    const hoursLog = structuredClone(task.hoursLog||[]);
+    const member = hoursLog[index].member;
+    hoursLog[index].hours = parsed;
+    const actLog = structuredClone(task.activityLog||[]);
+    actLog.push({timestamp:new Date(),actor:currentUser,
+      action:`[Admin] adjusted hours: ${currentHours}h → ${parsed}h for ${member}`});
+    await updateDoc(doc(db,'tasks',taskId),{hoursLog,activityLog:actLog});
+    toast('Hours updated ✔');
   }catch(e){ toast('Error: '+e.message,'error'); }
 };
 window._castVote = async function(taskId, member, field, value){
@@ -2145,10 +2287,135 @@ document.getElementById('pc-save').addEventListener('click',()=>{
 });
 
 // ══════════════════════════════════════════════════════════
+//  AI CHATBOT (Cerebras gpt-oss-120b)
+// ══════════════════════════════════════════════════════════
+const chatHistory = [];
+
+function buildSystemPrompt(){
+  const summary = allTasks.map(t=>({
+    title: t.title,
+    status: t.status,
+    category: t.category,
+    urgency: t.urgency,
+    submittedBy: t.submittedBy,
+    assignedTo: t.assignedTo||null,
+    hoursLogged: (t.hoursLog||[]).reduce((s,h)=>s+(h.hours||0),0),
+    approveVotes: Object.values(t.votes||{}).filter(v=>v.approve==='approve').length,
+    rejectVotes:  Object.values(t.votes||{}).filter(v=>v.approve==='reject').length,
+  }));
+  const hoursByMember = {};
+  MEMBERS.forEach(m=>hoursByMember[m]=0);
+  allTasks.forEach(t=>(t.hoursLog||[]).forEach(h=>{
+    if(h.member in hoursByMember) hoursByMember[h.member]+=(h.hours||0);
+  }));
+  return `You are the FAIA Fields AI assistant — a friendly, concise community manager for an intentional land project in Portugal. You have access to the real-time task board and can answer questions about tasks, status, assignments, hours worked, votes, and priorities.
+Be helpful, brief, and accurate. Do not invent data.
+Today: ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}.
+Members: ${MEMBERS.join(', ')}.
+Hours logged by member: ${JSON.stringify(hoursByMember)}.
+Task board (${summary.length} tasks total):
+${JSON.stringify(summary,null,1)}
+IMPORTANT: Respond in plain language. Do not expose raw JSON or internal IDs.`;
+}
+
+async function sendChatMessage(userText){
+  const msgs = document.getElementById('chat-messages');
+  const empty = document.getElementById('chat-empty');
+  if(empty) empty.remove();
+
+  const ub = document.createElement('div');
+  ub.className='cm user'; ub.textContent=userText;
+  msgs.appendChild(ub);
+
+  const typing = document.createElement('div');
+  typing.className='cm typing';
+  typing.innerHTML='<div class="typing-dots"><span></span><span></span><span></span></div>';
+  msgs.appendChild(typing);
+  msgs.scrollTop=msgs.scrollHeight;
+
+  chatHistory.push({role:'user',content:userText});
+  const payload=[{role:'system',content:buildSystemPrompt()},...chatHistory.slice(-12)];
+
+  try{
+    const resp = await fetch('https://api.cerebras.ai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${CEREBRAS_KEY}`},
+      body:JSON.stringify({model:'gpt-oss-120b',messages:payload,
+        max_completion_tokens:512,temperature:0.3,stream:false})
+    });
+    const data = await resp.json();
+    const reply = data.choices?.[0]?.message?.content || 'Sorry, no response.';
+    chatHistory.push({role:'assistant',content:reply});
+    typing.remove();
+    const ab = document.createElement('div');
+    ab.className='cm ai'; ab.textContent=reply;
+    msgs.appendChild(ab);
+  }catch(err){
+    typing.remove();
+    const ab = document.createElement('div');
+    ab.className='cm ai';
+    ab.textContent='⚠ Connection error. Check your internet connection.';
+    msgs.appendChild(ab);
+  }
+  msgs.scrollTop=msgs.scrollHeight;
+  document.getElementById('chat-send').disabled=false;
+  document.getElementById('chat-input').disabled=false;
+  document.getElementById('chat-input').focus();
+}
+
+const chatBubble  = document.getElementById('chat-bubble');
+const chatWindow  = document.getElementById('chat-window');
+const chatClose   = document.getElementById('chat-close');
+const chatInput   = document.getElementById('chat-input');
+const chatSendBtn = document.getElementById('chat-send');
+
+chatBubble.addEventListener('click',()=>{
+  chatWindow.classList.toggle('open');
+  if(chatWindow.classList.contains('open')) chatInput.focus();
+});
+chatClose.addEventListener('click',()=>chatWindow.classList.remove('open'));
+
+function submitChat(){
+  const text = chatInput.value.trim();
+  if(!text) return;
+  chatInput.value='';
+  chatSendBtn.disabled=true;
+  chatInput.disabled=true;
+  sendChatMessage(text);
+}
+chatSendBtn.addEventListener('click',submitChat);
+chatInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitChat();}
+});
+
+// ══════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════
 initSecurity();
 
 </script>
+
+<!-- ─── AI Chat Widget ─── -->
+<button id="chat-bubble" title="Ask FAIA AI">
+  🌱
+  <span id="chat-badge"></span>
+</button>
+<div id="chat-window">
+  <div id="chat-header">
+    <div>
+      <div class="ch-title">FAIA Assistant</div>
+      <div class="ch-sub">Ask about tasks, progress &amp; the project</div>
+    </div>
+    <button id="chat-close">✕</button>
+  </div>
+  <div id="chat-messages">
+    <div class="chat-empty" id="chat-empty">🌱 Hi! Ask me anything about FAIA Fields — tasks, who's working on what, hours, priorities…</div>
+  </div>
+  <div id="chat-input-row">
+    <input id="chat-input" type="text" placeholder="Ask about the project…" maxlength="400" autocomplete="off"/>
+    <button id="chat-send">↑</button>
+  </div>
+</div>
+
 </body>
 </html>
