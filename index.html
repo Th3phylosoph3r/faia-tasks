@@ -1256,15 +1256,32 @@ function avatarLetter(name){ return name ? name[0].toUpperCase() : '?'; }
 //  FIRESTORE LISTENER
 // ══════════════════════════════════════════════════════════
 function startListener(){
-  const q = query(collection(db,'tasks'), orderBy('submittedAt','desc'));
+  // No orderBy — avoids needing a Firestore composite index.
+  // We sort client-side instead (most recent first).
+  const q = collection(db,'tasks');
   onSnapshot(q, snap => {
-    allTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
+    allTasks = snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>{
+        const ta = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : (a.submittedAt?.seconds||0)*1000;
+        const tb = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : (b.submittedAt?.seconds||0)*1000;
+        return tb - ta;
+      });
     renderAll();
     document.getElementById('loading-screen').style.display='none';
   }, err=>{
-    console.error(err);
+    console.error('Firestore read error:', err);
+    const msg = err.code==='permission-denied'
+      ? 'Firestore access denied.\nGo to Firebase Console → Firestore → Rules and set allow read, write: if true;'
+      : (tr('firestore_error'));
     document.getElementById('loading-screen').innerHTML=
-      `<p style="color:#c48a8a;font-family:var(--font-serif)">${tr('firestore_error').replace('\\n','<br>')}</p>`;
+      `<div style="max-width:400px;text-align:center;padding:1.5rem">
+        <p style="color:#c48a8a;font-family:var(--font-serif);font-size:1.1rem;margin-bottom:0.75rem">⚠ Connection Error</p>
+        <p style="font-size:0.82rem;color:var(--text-muted);white-space:pre-line">${msg.replace('\\n','\n')}</p>
+        <a href="https://console.firebase.google.com/project/raiz-os/firestore/rules"
+           target="_blank" style="display:inline-block;margin-top:1rem;font-size:0.8rem;
+           color:var(--sage-dark);text-decoration:underline">Open Firestore Rules →</a>
+       </div>`;
   });
 }
 
@@ -1819,21 +1836,7 @@ document.querySelectorAll('#mobile-nav button[data-page]').forEach(btn=>{
   btn.addEventListener('click',()=>switchPage(btn.dataset.page));
 });
 
-// mobile user select — sync with desktop
-const mobileUserSel = document.getElementById('mobile-user-select');
-mobileUserSel.value = currentUser;
-mobileUserSel.addEventListener('change',()=>{
-  currentUser = mobileUserSel.value;
-  localStorage.setItem('faiaUser', currentUser);
-  document.getElementById('user-select').value = currentUser;
-  document.getElementById('user-avatar').textContent = avatarLetter(currentUser);
-  document.getElementById('mobile-user-avatar').textContent = avatarLetter(currentUser);
-  renderAll();
-});
-if(currentUser){
-  document.getElementById('mobile-user-avatar').textContent = avatarLetter(currentUser);
-  mobileUserSel.value = currentUser;
-}
+// mobile user select handled below in PIN section — see mobileUserSel2
 
 // sync mobile lang buttons style
 function syncMobileLang(){
