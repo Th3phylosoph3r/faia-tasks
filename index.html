@@ -566,12 +566,149 @@ textarea{resize:vertical;min-height:80px}
     grid-template-columns:1fr;
   }
 }
+
+/* ════════════════════════════════
+   LOCK SCREEN
+════════════════════════════════ */
+#lock-screen{
+  position:fixed;inset:0;z-index:2000;
+  background:var(--cream);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+}
+.lock-card{
+  background:#fff;border:1px solid var(--stone-light);
+  border-radius:var(--radius);padding:2.5rem 2rem 2rem;
+  width:100%;max-width:340px;text-align:center;
+  box-shadow:var(--shadow-md);animation:fadeIn 0.3s ease;
+}
+.lock-logo{font-family:var(--font-serif);font-size:2rem;
+  color:var(--sage-dark);letter-spacing:0.12em;margin-bottom:0.2rem}
+.lock-logo span{color:var(--earth);font-style:italic}
+.lock-sub{font-size:0.8rem;color:var(--text-muted);margin-bottom:1.75rem;font-style:italic}
+.lock-input-wrap{position:relative;margin-bottom:0.5rem}
+.lock-input-wrap input{font-size:1rem;letter-spacing:0.18em;text-align:center;padding-right:2.5rem}
+.lock-eye{
+  position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);
+  border:none;background:none;cursor:pointer;color:var(--text-muted);font-size:1rem;
+  padding:0;
+}
+#lock-error{color:var(--s-rejected);font-size:0.78rem;min-height:1.2em;margin-bottom:0.75rem}
+.lock-hint{font-size:0.72rem;color:var(--text-light);margin-top:1.25rem;font-style:italic}
+
+/* ════════════════════════════════
+   PIN MODAL
+════════════════════════════════ */
+#pin-overlay{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(58,53,48,0.55);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:1rem;
+}
+#pin-overlay.open{display:flex}
+#pin-card{
+  background:var(--cream);border-radius:var(--radius);
+  border:1px solid var(--stone-light);
+  width:100%;max-width:310px;padding:2rem 1.5rem 1.5rem;
+  text-align:center;box-shadow:var(--shadow-md);
+  animation:fadeIn 0.2s ease;
+}
+#pin-card h3{font-family:var(--font-serif);font-size:1.35rem;margin-bottom:0.2rem}
+#pin-card .pin-sub{font-size:0.8rem;color:var(--text-muted);margin-bottom:1.25rem}
+.pin-dots{display:flex;justify-content:center;gap:0.6rem;margin-bottom:1.25rem}
+.pin-dot{
+  width:13px;height:13px;border-radius:50%;
+  border:2px solid var(--stone);background:transparent;
+  transition:all 0.15s ease;
+}
+.pin-dot.filled{background:var(--sage-dark);border-color:var(--sage-dark);transform:scale(1.1)}
+.pin-pad{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;
+  margin-bottom:0.85rem;
+}
+.pin-key{
+  aspect-ratio:1;border:1px solid var(--stone-light);border-radius:var(--radius-sm);
+  background:var(--parchment);font-family:var(--font-sans);font-size:1.1rem;font-weight:500;
+  cursor:pointer;color:var(--text-primary);
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);
+  -webkit-tap-highlight-color:transparent;
+}
+.pin-key:hover,.pin-key:active{background:var(--stone-light);transform:scale(0.95)}
+.pin-key.del{font-size:0.82rem;color:var(--text-muted)}
+.pin-key.zero{grid-column:2}
+#pin-error-msg{color:var(--s-rejected);font-size:0.76rem;min-height:1em;margin-bottom:0.5rem}
+.pin-cancel-btn{font-size:0.76rem;color:var(--text-light);cursor:pointer;
+  background:none;border:none;text-decoration:underline;padding:0.25rem}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%,60%{transform:translateX(-6px)}
+  40%,80%{transform:translateX(6px)}
+}
+
+/* ════════════════════════════════
+   PROFILE PANEL
+════════════════════════════════ */
+#profile-overlay{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(58,53,48,0.45);backdrop-filter:blur(4px);
+  display:none;align-items:flex-end;justify-content:center;
+  padding:0;
+}
+#profile-overlay.open{display:flex}
+#profile-panel{
+  background:var(--cream);border-radius:var(--radius) var(--radius) 0 0;
+  border:1px solid var(--stone-light);border-bottom:none;
+  width:100%;max-width:460px;padding:1.5rem 1.5rem 2.5rem;
+  box-shadow:0 -4px 24px rgba(58,53,48,0.12);
+  animation:slideUp 0.25s ease;
+}
+#profile-panel h3{font-family:var(--font-serif);font-size:1.25rem;margin-bottom:1rem}
+.prow{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.8rem 0;border-bottom:1px solid var(--stone-light);
+}
+.prow:last-of-type{border-bottom:none}
+.prow-info label{font-size:0.88rem;font-weight:500}
+.prow-info .prow-sub{font-size:0.74rem;color:var(--text-muted)}
+/* Toggle switch */
+.sw{position:relative;width:42px;height:23px;flex:0 0 42px}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw-track{position:absolute;inset:0;background:var(--stone-light);
+  border-radius:12px;cursor:pointer;transition:background 0.2s;}
+.sw input:checked + .sw-track{background:var(--sage-dark)}
+.sw-thumb{position:absolute;width:17px;height:17px;background:#fff;
+  border-radius:50%;top:3px;left:3px;transition:transform 0.2s;
+  box-shadow:0 1px 3px rgba(0,0,0,0.2);pointer-events:none;}
+.sw input:checked ~ .sw-thumb{transform:translateX(19px)}
+/* Change PIN sub-form */
+#pin-change-form{display:none;flex-direction:column;gap:0.5rem;margin-top:0.75rem}
+#pin-change-form input{
+  letter-spacing:0.15em;text-align:center;font-size:1rem;
+  padding:0.5rem;max-width:200px;
+}
+#pin-change-form.visible{display:flex}
+.avatar-btn{cursor:pointer;} 
 </style>
 </head>
 <body>
 
+<!-- ─── Lock screen ─── -->
+<div id="lock-screen">
+  <div class="lock-card">
+    <div class="lock-logo">FAIA <span>Fields</span></div>
+    <p class="lock-sub">Intentional Land Community</p>
+    <div class="lock-input-wrap">
+      <input type="password" id="lock-input" placeholder="Enter password…" autocomplete="off" maxlength="32"/>
+      <button class="lock-eye" id="lock-eye-btn" tabindex="-1">👁</button>
+    </div>
+    <p id="lock-error"></p>
+    <button class="btn btn-primary" style="width:100%" id="lock-submit">Unlock</button>
+    <p class="lock-hint">Ask Sergio for the access password.</p>
+  </div>
+</div>
+
 <!-- ─── Loading screen ─── -->
-<div id="loading-screen">
+<div id="loading-screen" style="display:none">
   <div class="spinner"></div>
   <p>Connecting to FAIA…</p>
 </div>
@@ -786,6 +923,73 @@ textarea{resize:vertical;min-height:80px}
 <!-- ─── Toast container ─── -->
 <div id="toast-container"></div>
 
+<!-- ─── PIN Modal ─── -->
+<div id="pin-overlay">
+  <div id="pin-card">
+    <h3>Confirm Identity</h3>
+    <p class="pin-sub" id="pin-member-label">Member</p>
+    <div class="pin-dots">
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div class="pin-pad" id="pin-pad">
+      <button class="pin-key" data-d="1">1</button>
+      <button class="pin-key" data-d="2">2</button>
+      <button class="pin-key" data-d="3">3</button>
+      <button class="pin-key" data-d="4">4</button>
+      <button class="pin-key" data-d="5">5</button>
+      <button class="pin-key" data-d="6">6</button>
+      <button class="pin-key" data-d="7">7</button>
+      <button class="pin-key" data-d="8">8</button>
+      <button class="pin-key" data-d="9">9</button>
+      <button class="pin-key del" id="pin-del">⌫</button>
+      <button class="pin-key zero" data-d="0">0</button>
+    </div>
+    <p id="pin-error-msg"></p>
+    <button class="pin-cancel-btn" id="pin-cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- ─── Profile Panel ─── -->
+<div id="profile-overlay">
+  <div id="profile-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h3 id="profile-title">My Profile</h3>
+      <button class="close-btn" id="profile-close" style="font-size:1.3rem;background:none;border:none;cursor:pointer;color:var(--text-muted)">✕</button>
+    </div>
+    <div class="prow">
+      <div class="prow-info">
+        <label>Anonymous Voting</label>
+        <div class="prow-sub">Your votes show as an alias to others</div>
+      </div>
+      <label class="sw">
+        <input type="checkbox" id="anon-toggle"/>
+        <div class="sw-track"></div>
+        <div class="sw-thumb"></div>
+      </label>
+    </div>
+    <div class="prow" style="flex-direction:column;align-items:flex-start;gap:0.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+        <div class="prow-info">
+          <label>Change PIN</label>
+          <div class="prow-sub">6-digit PIN to protect your account</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="pin-change-toggle">Change</button>
+      </div>
+      <div id="pin-change-form">
+        <input type="password" id="pc-current" placeholder="Current PIN" maxlength="6" inputmode="numeric"/>
+        <input type="password" id="pc-new" placeholder="New PIN (6 digits)" maxlength="6" inputmode="numeric"/>
+        <input type="password" id="pc-confirm" placeholder="Confirm new PIN" maxlength="6" inputmode="numeric"/>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-primary btn-sm" id="pc-save">Save PIN</button>
+          <button class="btn btn-secondary btn-sm" id="pc-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════════════════════
      FIREBASE CONFIG PLACEHOLDER
 ════════════════════════════════ -->
@@ -795,6 +999,21 @@ textarea{resize:vertical;min-height:80px}
 // │  Get it from: Firebase Console → Project Settings →    │
 // │  Your apps → Web app → SDK setup → Config              │
 // └─────────────────────────────────────────────────────────┘
+// ┌─────────────────────────────────────────────────────────┐
+// │  SECURITY CONFIG — CHANGE BEFORE SHARING                │
+// │  APP_PASSWORD: shared password to open the app          │
+// │  DEFAULT_PINS: distribute each PIN secretly per member  │
+// │  Members can change their own PIN from their profile.   │
+// └─────────────────────────────────────────────────────────┘
+const APP_PASSWORD  = 'raiz2024';     // ← change me!
+const DEFAULT_PINS  = {
+  'Sergio':    '111111',              // ← distribute secretly
+  'Steve':     '222222',
+  'Conceição': '333333',
+  'Jenny':     '444444',
+  'Luke':      '555555'
+};
+
 const firebaseConfig = {
   apiKey:            "AIzaSyCTw8KchIBH9FsWersnEEJqckKzk5vRlJU",
   authDomain:        "raiz-os.firebaseapp.com",
@@ -1646,18 +1865,23 @@ document.getElementById('modal-overlay').addEventListener('click', e=>{
 });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
 
-// user select
+// user select — requires PIN validation
 const userSel = document.getElementById('user-select');
 userSel.value = currentUser;
 userSel.addEventListener('change', ()=>{
-  currentUser = userSel.value;
-  localStorage.setItem('faiaUser', currentUser);
-  document.getElementById('user-avatar').textContent = avatarLetter(currentUser);
-  renderAll();
+  const newMember = userSel.value;
+  if(!newMember){ clearUser(); return; }
+  userSel.value = currentUser; // revert visually until PIN confirmed
+  openPinModal(newMember, 'desktop');
 });
 if(currentUser){
   document.getElementById('user-avatar').textContent = avatarLetter(currentUser);
 }
+// make avatar open profile panel
+document.getElementById('user-avatar').classList.add('avatar-btn');
+document.getElementById('user-avatar').addEventListener('click',()=>{
+  if(currentUser) openProfilePanel();
+});
 
 // hero date
 document.getElementById('hero-date').textContent =
@@ -1673,10 +1897,225 @@ function escHtml(s){
 function escAttr(s){ return escHtml(s); }
 
 // ══════════════════════════════════════════════════════════
+//  SECURITY — LOCK SCREEN
+// ══════════════════════════════════════════════════════════
+function initSecurity(){
+  if(sessionStorage.getItem('faiaUnlocked')==='1'){
+    document.getElementById('lock-screen').style.display='none';
+    document.getElementById('loading-screen').style.display='flex';
+    startListener();
+    applyLang();
+    return;
+  }
+  // Show lock screen
+  const lockInput = document.getElementById('lock-input');
+  const lockError = document.getElementById('lock-error');
+  const lockSubmit= document.getElementById('lock-submit');
+  const lockEye   = document.getElementById('lock-eye-btn');
+
+  lockEye.addEventListener('click',()=>{
+    lockInput.type = lockInput.type==='password'?'text':'password';
+  });
+  function tryUnlock(){
+    if(lockInput.value.trim()===APP_PASSWORD){
+      sessionStorage.setItem('faiaUnlocked','1');
+      document.getElementById('lock-screen').style.display='none';
+      document.getElementById('loading-screen').style.display='flex';
+      startListener();
+      applyLang();
+    } else {
+      lockError.textContent='Incorrect password. Try again.';
+      lockInput.value='';
+      lockInput.style.animation='shake 0.3s ease';
+      setTimeout(()=>lockInput.style.animation='',300);
+    }
+  }
+  lockSubmit.addEventListener('click', tryUnlock);
+  lockInput.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+}
+
+// ══════════════════════════════════════════════════════════
+//  PIN HELPERS
+// ══════════════════════════════════════════════════════════
+function pinStorageKey(m){ return 'faiap_' + btoa(unescape(encodeURIComponent(m))); }
+function storePin(m, pin){ localStorage.setItem(pinStorageKey(m), btoa(pin)); }
+function checkPin(m, pin){
+  const stored = localStorage.getItem(pinStorageKey(m));
+  if(!stored) return pin === (DEFAULT_PINS[m]||'000000');
+  try{ return atob(stored) === pin; } catch(e){ return false; }
+}
+function clearUser(){
+  currentUser='';
+  localStorage.setItem('faiaUser','');
+  document.getElementById('user-avatar').textContent='—';
+  document.getElementById('user-select').value='';
+  document.getElementById('mobile-user-select').value='';
+  document.getElementById('mobile-user-avatar').textContent='—';
+  renderAll();
+}
+function setCurrentUser(m){
+  currentUser=m;
+  localStorage.setItem('faiaUser',m);
+  document.getElementById('user-avatar').textContent=avatarLetter(m);
+  document.getElementById('user-select').value=m;
+  document.getElementById('mobile-user-select').value=m;
+  document.getElementById('mobile-user-avatar').textContent=avatarLetter(m);
+  renderAll();
+}
+
+// ── PIN Modal ────────────────────────────────────────────
+let _pinBuf='';
+let _pinTarget='';
+let _pinContext='';
+
+function openPinModal(member, ctx){
+  _pinBuf='';
+  _pinTarget=member;
+  _pinContext=ctx;
+  updatePinDots();
+  document.getElementById('pin-member-label').textContent='Enter PIN for '+member;
+  document.getElementById('pin-error-msg').textContent='';
+  document.getElementById('pin-overlay').classList.add('open');
+}
+function closePinModal(){
+  document.getElementById('pin-overlay').classList.remove('open');
+  _pinBuf='';
+  _pinTarget='';
+}
+function updatePinDots(){
+  document.querySelectorAll('.pin-dot').forEach((d,i)=>{
+    d.classList.toggle('filled',i<_pinBuf.length);
+  });
+}
+function pinDigit(d){
+  if(_pinBuf.length>=6) return;
+  _pinBuf+=d;
+  updatePinDots();
+  if(_pinBuf.length===6) setTimeout(validatePin,120);
+}
+function pinBack(){
+  _pinBuf=_pinBuf.slice(0,-1);
+  updatePinDots();
+}
+function validatePin(){
+  if(checkPin(_pinTarget,_pinBuf)){
+    const m=_pinTarget;
+    closePinModal();
+    setCurrentUser(m);
+    toast('Welcome, '+m+'! 🌿');
+  } else {
+    document.getElementById('pin-error-msg').textContent='Incorrect PIN. Try again.';
+    _pinBuf='';
+    updatePinDots();
+    const card=document.getElementById('pin-card');
+    card.style.animation='shake 0.35s ease';
+    setTimeout(()=>card.style.animation='',350);
+  }
+}
+document.querySelectorAll('.pin-key[data-d]').forEach(btn=>{
+  btn.addEventListener('click',()=>pinDigit(btn.dataset.d));
+});
+document.getElementById('pin-del').addEventListener('click',pinBack);
+document.getElementById('pin-cancel').addEventListener('click',()=>{
+  closePinModal();
+  // revert selects visually
+  document.getElementById('user-select').value=currentUser;
+  document.getElementById('mobile-user-select').value=currentUser;
+});
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('pin-overlay').classList.contains('open')) return;
+  if(e.key>='0'&&e.key<='9') pinDigit(e.key);
+  if(e.key==='Backspace') pinBack();
+  if(e.key==='Escape'){ closePinModal();
+    document.getElementById('user-select').value=currentUser;
+    document.getElementById('mobile-user-select').value=currentUser; }
+});
+
+// mobile user select — also requires PIN
+const mobileUserSel2 = document.getElementById('mobile-user-select');
+mobileUserSel2.value = currentUser;
+mobileUserSel2.addEventListener('change',()=>{
+  const nm=mobileUserSel2.value;
+  if(!nm){ clearUser(); return; }
+  mobileUserSel2.value=currentUser;
+  openPinModal(nm,'mobile');
+});
+
+// ══════════════════════════════════════════════════════════
+//  ANONYMOUS VOTING ALIASES
+// ══════════════════════════════════════════════════════════
+const ANON_ALIASES = (()=>{
+  const k='faia_al_v1';
+  const s=localStorage.getItem(k);
+  if(s) try{ return JSON.parse(s); }catch(e){}
+  const letters=['A','B','C','D','E'];
+  const arr=[...MEMBERS];
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  const al={};
+  arr.forEach((m,i)=>al[m]='Member '+letters[i]);
+  localStorage.setItem(k,JSON.stringify(al));
+  return al;
+})();
+function isAnon(m){ return localStorage.getItem('faia_anon_'+m)==='true'; }
+function displayName(m){
+  if(!isAnon(m)) return m;
+  if(m===currentUser) return m; // always show yourself
+  return ANON_ALIASES[m]||'Anonymous';
+}
+
+// ══════════════════════════════════════════════════════════
+//  PROFILE PANEL
+// ══════════════════════════════════════════════════════════
+function openProfilePanel(){
+  if(!currentUser){ toast('Select a member first.','error'); return; }
+  document.getElementById('profile-title').textContent = currentUser + "'s Profile";
+  document.getElementById('anon-toggle').checked = isAnon(currentUser);
+  document.getElementById('pin-change-form').classList.remove('visible');
+  document.getElementById('pc-current').value='';
+  document.getElementById('pc-new').value='';
+  document.getElementById('pc-confirm').value='';
+  document.getElementById('profile-overlay').classList.add('open');
+}
+function closeProfilePanel(){
+  document.getElementById('profile-overlay').classList.remove('open');
+}
+document.getElementById('profile-close').addEventListener('click',closeProfilePanel);
+document.getElementById('profile-overlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('profile-overlay')) closeProfilePanel();
+});
+document.getElementById('anon-toggle').addEventListener('change',e=>{
+  localStorage.setItem('faia_anon_'+currentUser, e.target.checked?'true':'false');
+  toast(e.target.checked?'Anonymous mode on 🎭':'Anonymous mode off');
+  renderAll();
+});
+document.getElementById('pin-change-toggle').addEventListener('click',()=>{
+  document.getElementById('pin-change-form').classList.toggle('visible');
+});
+document.getElementById('pc-cancel').addEventListener('click',()=>{
+  document.getElementById('pin-change-form').classList.remove('visible');
+});
+document.getElementById('pc-save').addEventListener('click',()=>{
+  const cur  = document.getElementById('pc-current').value;
+  const nw   = document.getElementById('pc-new').value;
+  const conf = document.getElementById('pc-confirm').value;
+  if(!checkPin(currentUser,cur)){ toast('Current PIN is incorrect.','error'); return; }
+  if(!/^\d{6}$/.test(nw)){ toast('New PIN must be exactly 6 digits.','error'); return; }
+  if(nw!==conf){ toast('PINs do not match.','error'); return; }
+  storePin(currentUser,nw);
+  toast('PIN updated successfully! 🔒');
+  document.getElementById('pin-change-form').classList.remove('visible');
+  document.getElementById('pc-current').value='';
+  document.getElementById('pc-new').value='';
+  document.getElementById('pc-confirm').value='';
+});
+
+// ══════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════
-applyLang();
-startListener();
+initSecurity();
 
 </script>
 </body>
