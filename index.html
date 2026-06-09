@@ -1636,7 +1636,7 @@ function renderModal(t){
           <option${t.assignedRole==='Subcontract Coordinator'?' selected':''}>${tr('subcontract')}</option>
         </select>
       </div>
-      <div class="field-group">
+      <div class="field-group">oo
         <label>${tr('start_date')}</label>
         <input type="date" id="m-start-date" value="${t.startDate||''}"/>
       </div>
@@ -2340,7 +2340,7 @@ async function sendChatMessage(userText){
     const resp = await fetch('https://api.cerebras.ai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${CEREBRAS_KEY}`},
-      body:JSON.stringify({model:'llama3.1-8b',messages:payload,
+      body:JSON.stringify({model:'gpt-oss-120b',messages:payload,
         max_completion_tokens:512,temperature:0.3,stream:false})
     });
     const data = await resp.json();
